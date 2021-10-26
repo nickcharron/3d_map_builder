@@ -22,7 +22,6 @@ rerun the SLAM.
 This figure illustrates the methodology used to build maps. First, extrinsic calibrations between all required sensors are combined with the SLAM trajectory and loaded into a transformation tree (TF Tree). The SLAM trajectory should have poses that are expressed as a transform from some baselink frame to some world frame. The baselink frame is usually a frame associated with one of the sensors, and this may change based on the SLAM implementation. The extrinsics calibration must generate a tree that connects all 3D sensors to the baselink frame. 
 
 Our Map Builder allows any number of filters to be applied to data at three different stages in the pipeline:
-
     (1) input_filters: filters are applied to the raw scans
     (2) intermediate_filters: individual scans are aggregated together into
     submaps of size equal to the "intermediary_map_size" parameter and then the
@@ -32,7 +31,6 @@ Our Map Builder allows any number of filters to be applied to data at three diff
     once the maps have been generated 
 
 The following are the types of filters that have been implemented in libbeam/beam_filtering and can be called by the map builder:
-
     * DROR: Dynamic Radius Outlier Removal filter, see
     https://ieeexplore.ieee.org/abstract/document/8575761
     * ROR: Radius Outlier Removal filter, see PCL documentation
@@ -108,6 +106,13 @@ For more information on how to run the executable, run:
 Often, SLAM runs a trajectory estimation at high rate (local mapping) and corrects poses at a slower rate running some loop closure technique. Often, the SLAM method doesn't output the high rate poses after correction. This tool is made for building a dense trajectory given a sparse loop closed (or corrected) poses and a dense uncorrected set of poses. We call the former the loop_closed_poses, and the latter the high_rate_poses. 
     * loop_closed_poses: must be of type nav_msgs/Path. In this case, we take the last Path message as the final loop closed trajectory.
     * high_rate_poses: must be of type nav_msgs/Path. In this case, we take all Path messages and combine then into one trajectory. For the case of duplicate poses (i.e., poses with the same timestamp), the latest estimates are kept.
+
+For more information on how to run the executable, run:
+
+```
+./path_to_build_dir/3d_map_builder_loop_closed_paths_to_poses --help
+```
+
 
 **Methodology:** This works by adding all poses into ordered maps, sorted by timestamp. We then iterate through each high rate pose, and when the timestamp align with, or exceeds a loop closed path, we calculate the correction T_WORLDCORRECTED_WORLDESTIMATED. Where world estimated, is the etimated world frame of the high rate poses, and world corrected is the estimated world frame of the loop closed poses. There are two options to apply these corrections:
     (1) we apply the same correction to all high rate poses between loop closed poses. This generally gives a discontinuous trajectory, but may be more precise because it does the least amount of interpolation
