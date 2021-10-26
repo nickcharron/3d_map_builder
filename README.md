@@ -17,7 +17,7 @@ rerun the SLAM.
 
 ## Methodology:
 
-![MapBuilderFlowChart.pdf](docs/MapBuilderFlowChart.pdf)
+![MapBuilderFlowChart.jpg](docs/MapBuilderFlowChart.pdf)
 
 This figure illustrates the methodology used to build maps. First, extrinsic calibrations between all required sensors are combined with the SLAM trajectory and loaded into a transformation tree (TF Tree). The SLAM trajectory should have poses that are expressed as a transform from some baselink frame to some world frame. The baselink frame is usually a frame associated with one of the sensors, and this may change based on the SLAM implementation. The extrinsics calibration must generate a tree that connects all 3D sensors to the baselink frame. 
 
