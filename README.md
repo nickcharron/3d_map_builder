@@ -6,6 +6,34 @@ For more information, see our published research paper at: COMING SOON
 
 If you use this tool for any research work, please cite the above paper.
 
+## Dependencies
+
+This repo only depends on our internal [libbeam](https://github.com/BEAMRobotics/libbeam) library. We currently have tested on Ubuntu18 with libbeam v1.0.
+
+Libeam depends on the following:
+
+* [ROS](https://www.ros.org/)
+* [Catch2](https://github.com/catchorg/Catch2)
+* [Eigen3](https://gitlab.com/libeigen/eigen/)
+* [Ceres](http://ceres-solver.org/index.html)
+* [PCL](https://github.com/PointCloudLibrary/pcl)
+* [gflags](https://github.com/gflags/gflags)
+* [nlohmann json](https://github.com/nlohmann/json)
+
+For more information on libbeam and it's dependencies, see the [docs](https://github.com/BEAMRobotics/libbeam). Note that we do not need all modules of libbeam for 3d_map_builder.
+
+## Install
+
+For ease of use, we provide an install script that has been tested on Ubuntu18. If you would like the option of not installing all required dependencies to your system (could avoid version conflicts), we'd recommend cloning to a new catkin workspace.
+
+```
+git clone https://github.com/nickcharron/3d_map_builder.git
+cd 3d_map_builder
+bash scripts/install.bash
+```
+
+This script clones libbeam and runs the libbeam install script with specific params (this only builds required libbeam modules). It then builds libbeam and 3d_map_builder. The libbeam install script install all libbeam dependencies. If you have any issues, we recommend you go through the install scripts and enter the commands manually.
+
 ## Goal/Objectives:
 
 * To have a method for building a map from 3D data (e.g., lidar, RGBD camera, sonar, etc) given a trajectory output from SLAM and extrinsic calibrations

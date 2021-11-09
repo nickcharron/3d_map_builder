@@ -3,8 +3,6 @@
 #include <beam_mapping/MapBuilder.h>
 #include <beam_utils/gflags.h>
 
-#include <iostream>
-
 DEFINE_string(
     config_file, "",
     "Full file path to config file (ex. /path/to/config/file.json (or .ply))");
