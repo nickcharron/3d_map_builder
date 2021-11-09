@@ -3,7 +3,7 @@ set -e
 
 # Get important directories
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SRC_DIR="${SCRIPT_DIR//'3d_map_builder/scripts'}"
+SRC_DIR="${SCRIPT_DIR//'/3d_map_builder/scripts'}"
 
 USING_CATKIN=0
 NUM_PROCESSORS=1
@@ -22,17 +22,17 @@ IGNORE_BEAM_UTILS_=0
 
 # get number of processors for high-load installs
 if [ $(nproc) -lt 2 ]; then
-  echo "Warning: A minimum of 2 processors is recommended."
+  NUM_PROCESSORS=1
 else
   NUM_PROCESSORS=$(( $(nproc) / 2 ))
 fi
 
 get_inputs()
 {
-  echo "Are you installing to a catkin workspace?"
+  echo "Are you installing to a catkin workspace? (y/n)"
   while read ans; do
       case "$ans" in
-          y) USING_CATKIN=1;;
+          y) USING_CATKIN=1; break;;
           n) break;;
           *) echo "Invalid input (y/n):";;
       esac
@@ -43,7 +43,7 @@ get_inputs()
 install_libbeam()
 {
   # Ensure that Beam install scripts are installed
-  LIBBEAM_SRC = SRC_DIR + "/libbeam"
+  LIBBEAM_SRC="$SRC_DIR/libbeam"
   if [ -d $LIBBEAM_SRC ]; then
       ## TODO: edit this
       echo "libbeam found. MAKE SURE YOU ARE ON VERSION v1.0"
