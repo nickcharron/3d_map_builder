@@ -86,7 +86,7 @@ install_routine()
   then
       echo "building your catkin workspace"
       cd $SRC_DIR
-      #TODO add cmake params for libbeam
+      cd ..
       catkin build -j$NUM_PROCESSORS \
       -DCMAKE_IGNORE_BEAM_CALIBRATION=$IGNORE_BEAM_CALIBRATION_ \
       -DCMAKE_IGNORE_BEAM_COLORIZE=$IGNORE_BEAM_COLORIZE_ \
