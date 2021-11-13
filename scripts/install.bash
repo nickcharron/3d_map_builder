@@ -85,9 +85,9 @@ install_routine()
   if(( $USING_CATKIN == 1 ))
   then
       cd $SRC_DIR
-      echo "Building 3d_map_builder"
-      bash 3d_map_builder/scripts/export_libbeam_cmake_variables.bash
-      echo "Install complete. Go to your catkin workspace and run catkin build"
+      echo "Building libbeam and 3d_map_builder"
+      bash 3d_map_builder/scripts/build_catkin_ws.bash
+      echo "Install complete."
   else 
       cd $SRC_DIR
       cd 3d_map_builder
