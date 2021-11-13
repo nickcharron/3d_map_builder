@@ -84,23 +84,11 @@ install_routine()
 {
   if(( $USING_CATKIN == 1 ))
   then
-      echo "building your catkin workspace"
       cd $SRC_DIR
-      cd ..
-      catkin build -j$NUM_PROCESSORS \
-      -DCMAKE_IGNORE_BEAM_CALIBRATION=$IGNORE_BEAM_CALIBRATION_ \
-      -DCMAKE_IGNORE_BEAM_COLORIZE=$IGNORE_BEAM_COLORIZE_ \
-      -DCMAKE_IGNORE_BEAM_CONTAINERS=$IGNORE_BEAM_CONTAINERS_ \
-      -DCMAKE_IGNORE_BEAM_CV=$IGNORE_BEAM_CV_ \
-      -DCMAKE_IGNORE_BEAM_DEFECTS=$IGNORE_BEAM_DEFECTS_ \
-      -DCMAKE_IGNORE_BEAM_DEPTH=$IGNORE_BEAM_DEPTH_ \
-      -DCMAKE_IGNORE_BEAM_FILTERING=$IGNORE_BEAM_FILTERING_ \
-      -DCMAKE_IGNORE_BEAM_MAPPING=$IGNORE_BEAM_MAPPING_ \
-      -DCMAKE_IGNORE_BEAM_MATCHING=$IGNORE_BEAM_MATCHING_ \
-      -DCMAKE_IGNORE_BEAM_OPTIMIZATION=$IGNORE_BEAM_OPTIMIZATION_ \
-      -DCMAKE_IGNORE_BEAM_UTILS=$IGNORE_BEAM_UTILS_
-  else 
       echo "Building 3d_map_builder"
+      bash 3d_map_builder/scripts/export_libbeam_cmake_variables.bash
+      echo "Install complete. Go to your catkin workspace and run catkin build"
+  else 
       cd $SRC_DIR
       cd 3d_map_builder
       mkdir -p build
