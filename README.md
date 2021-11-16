@@ -15,12 +15,11 @@ Libeam depends on the following:
 * [ROS](https://www.ros.org/)
 * [Catch2](https://github.com/catchorg/Catch2)
 * [Eigen3](https://gitlab.com/libeigen/eigen/)
-* [Ceres](http://ceres-solver.org/index.html)
 * [PCL](https://github.com/PointCloudLibrary/pcl)
 * [gflags](https://github.com/gflags/gflags)
 * [nlohmann json](https://github.com/nlohmann/json)
 
-For more information on libbeam and it's dependencies, see the [docs](https://github.com/BEAMRobotics/libbeam). Note that we do not need all modules of libbeam for 3d_map_builder.
+For more information on libbeam and it's dependencies, see the [docs](https://github.com/BEAMRobotics/libbeam). Note that we do not need all modules of libbeam for 3d_map_builder, therefore we also don't need all dependences (i.e., ceres and opencv4)
 
 ## Install
 
@@ -33,6 +32,33 @@ bash scripts/install.bash
 ```
 
 This script clones libbeam and runs the libbeam install script with specific params (this only builds required libbeam modules). It then builds libbeam and 3d_map_builder. The libbeam install script install all libbeam dependencies. If you have any issues, we recommend you go through the install scripts and enter the commands manually.
+
+### Docker
+
+We also provide a docker container with the 3d_map_builder and libbeam compiled in a catkin workspace. This docker can be retrieved from: https://hub.docker.com/repository/docker/nickcharron/3d_map_builder
+
+## Example
+
+We provide an example bag file and configuration to help you get started. For simplicity, we will provide instructions for running using the docker image, however, if you are insalling locally, then follow the instructions above and ignore the docker parts from this section
+
+### Download Data and Setup Docker
+
+1. Download simulation dataset from [here](https://drive.google.com/file/d/1GferYDDFnFdmXObrdfwO2Mof7sdyI0Nf/view?usp=sharing)
+2. Install docker if not already installed. See instructions [here](https://docs.docker.com/engine/install/ubuntu/), or use our install script in 3d_map_builder/scripts/install_docker.bash
+3. docker pull nickcharron/3d_map_builder
+4. start a docker container:
+
+    ```
+    docker run -it --rm -v /home/nick/datasets/simulation:/home/user/datasets -u user nickcharron/3d_map_builder
+    ```
+
+    Notes:  -it attaches to the docker
+            --rm closes the container on exit
+            -v mounts the downloaded data to the /home/user/datasets folder in the container
+            -u switches to the user `user`. Note sudo password is `password` 
+
+### Get
+
 
 ## Goal/Objectives:
 
