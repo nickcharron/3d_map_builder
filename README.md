@@ -15,7 +15,7 @@ Libeam depends on the following:
 * [ROS](https://www.ros.org/)
 * [Catch2](https://github.com/catchorg/Catch2)
 * [Eigen3](https://gitlab.com/libeigen/eigen/)
-* [PCL](https://github.com/PointCloudLibrary/pcl)
+* [PCL 1.11.1 or greater](https://github.com/PointCloudLibrary/pcl)
 * [gflags](https://github.com/gflags/gflags)
 * [nlohmann json](https://github.com/nlohmann/json)
 
@@ -82,12 +82,6 @@ All parameters can be configured in the input config json. For an example config
     * Pose file: the pose file should contain all trajectory information. We have multiple pose file data formats including json, ply, pcd, and txt. For example formats, see: libbeam/beam_mapping/tests/test_data/PosesTests/. You can create these file formats using one of the executables which convert topics from a bag to a pose file, or by using the Poses class in: libbeam/beam_mapping/include/beam_mapping/Poses.h
 
 **Config Params:**
-* **pose_file**: Full path to pose file. For more information on pose files, see the section above.
-* **bag_file_path**: Full path to bag file. For more information on the bag file requirements, see section above.
-* **save_directory**: Output direction for map(s). This directory needs to exist already
-* **extrinsics_file**: Full path to extrinsics file. This is a json file that has all the transformations needed to create a fully connected TF tree to tranform data between any 3D sensor in the bag. For example extrinsics file format, see docs/ExampleExtrinsics.json
-* **moving_frame**: frame id of the fixed frame associated with the poses (T_FIXEDFRAME_MOVINGFRAME) in the pose file (e.g., world)
-* **fixed_frame**: frame id of the moving frame associated with the poses (T_FIXEDFRAME_MOVINGFRAME) in the pose file (e.g., lidar)
 * **intermediary_map_size**: numer of scans to aggregate into an intermediary map before applying intermediary filters
 * **min_translation_m**: minimum translation in meters to take a new scan for the map
 * **min_rotation_deg**: minimum rotation in degrees to take a new scan for the map (note that we use an or statement between this and min translation to determine if we keep a scan)
