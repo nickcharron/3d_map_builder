@@ -4,6 +4,10 @@
 #include <beam_utils/gflags.h>
 
 DEFINE_string(
+    bag_file, "",
+    "Full file path to bag file containing the 3D data. ");
+DEFINE_validator(bag_file, &beam::gflags::ValidateBagFileMustExist);
+DEFINE_string(
     config_file, "",
     "Full file path to config file (ex. /path/to/config/config.json)");
 DEFINE_validator(config_file, &beam::gflags::ValidateFileMustExist);
@@ -27,7 +31,7 @@ int main(int argc, char *argv[])
 {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  beam_mapping::MapBuilder map_builder(FLAGS_config_file, FLAGS_pose_file,
+  beam_mapping::MapBuilder map_builder(FLAGS_bag_file, FLAGS_config_file, FLAGS_pose_file,
                                        FLAGS_output_directory, FLAGS_extrinsics,
                                        FLAGS_poses_moving_frame);
   map_builder.BuildMap();

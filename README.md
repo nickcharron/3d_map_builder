@@ -37,29 +37,6 @@ This script clones libbeam and runs the libbeam install script with specific par
 
 We also provide a docker container with the 3d_map_builder and libbeam compiled in a catkin workspace. This docker can be retrieved from: https://hub.docker.com/repository/docker/nickcharron/3d_map_builder
 
-## Example
-
-We provide an example bag file and configuration to help you get started. For simplicity, we will provide instructions for running using the docker image, however, if you are insalling locally, then follow the instructions above and ignore the docker parts from this section
-
-### Download Data and Setup Docker
-
-1. Download simulation dataset from [here](https://drive.google.com/file/d/1GferYDDFnFdmXObrdfwO2Mof7sdyI0Nf/view?usp=sharing)
-2. Install docker if not already installed. See instructions [here](https://docs.docker.com/engine/install/ubuntu/), or use our install script in 3d_map_builder/scripts/install_docker.bash
-3. docker pull nickcharron/3d_map_builder
-4. start a docker container:
-
-    ```
-    docker run -it --rm -v /home/nick/datasets/simulation:/home/user/datasets -u user nickcharron/3d_map_builder
-    ```
-
-    Notes:  -it attaches to the docker
-            --rm closes the container on exit
-            -v mounts the downloaded data to the /home/user/datasets folder in the container
-            -u switches to the user `user`. Note sudo password is `password` 
-
-### Get
-
-
 ## Goal/Objectives:
 
 * To have a method for building a map from 3D data (e.g., lidar, RGBD camera, sonar, etc) given a trajectory output from SLAM and extrinsic calibrations
@@ -171,3 +148,53 @@ The figure below shows the difference between interpolating the corrections or n
 
 ![Corrected High Rate Poses With Interpolation](docs/CorrectedHighRatePosesWithInterpolation.png)
 
+## Example
+
+We provide an example bag file and configuration to help you get started. For simplicity, we will provide instructions for running using the docker image, however, if you are insalling locally, then follow the instructions above and ignore the docker parts from this section
+
+### Download Data and Setup Docker
+
+1. Download simulation dataset from [here](https://drive.google.com/file/d/1GferYDDFnFdmXObrdfwO2Mof7sdyI0Nf/view?usp=sharing)
+2. Install docker if not already installed. See instructions [here](https://docs.docker.com/engine/install/ubuntu/), or use our install script in 3d_map_builder/scripts/install_docker.bash
+3. docker pull nickcharron/3d_map_builder
+4. start a docker container:
+
+    ```
+    docker run -it --rm -v /path_to/downloaded_data:/home/user/data -u user nickcharron/3d_map_builder
+    ```
+
+    Notes:  -it attaches to the docker
+            --rm closes the container on exit
+            -v mounts the downloaded data to the /home/user/data folder in the container
+            -u switches to the user `user`. Note sudo password is `password` 
+
+### Create Poses File
+
+The bag has the trajectory saved as an odometry message with the topic name: /odometry/ground_truth. We need to take those messages and convert them to a pose file for the map builder
+
+Within the docker container, run:
+
+```
+cd /home/user/catkin_ws
+./build/3d_map_builder/3d_map_builder_bag_to_poses_file -bag /home/user/data/sim_data.bag -output_path /home/user/data/ -topic /odometry/ground_truth -output_type JSON
+```
+
+If your data has the trajectory in the form of a path message, use the path_messages_to_pose_files executable. If you have a set of poses that are sparse but have been corrected with loop closed, and a set of dense poses that have not, you should use to loop_closed_paths_to_poses executable.
+
+### Build Map
+
+We are now ready to build the map. There are two files we will need to build the map, in addition to the pose file we just built:
+
+1. Config file: The example config we included in 3d_map_builder/config/EXAMPLE_CONFIG.json is already setup to run on this dataset. When using your own data, make sure you go through this and understand all the parameters. See below for an explanation on the parameters.
+2. Extrinsics file: we need to know the extrinsics to be able to transform all 3d data into the same reference frame. The extrinsics file we included in 3d_map_builder/config/EXAMPLE_EXTRINSICS.json has been setup to work on this dataset. You will need to create your own when using your own data.
+
+After creating your extrinsics, and configuring your config, run the following to build the map:
+
+```
+cd /home/user/catkin_ws
+./build/3d_map_builder/3d_map_builder_build_map -config_file /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_CONFIG.json -extrinsics /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_EXTRINSICS.json -pose_file /home/user/data/poses.json -bag_file /home/user/data/sim_data.bag 
+```
+
+That's it! Your maps will be output to the /home/user/data/ on your docker container, and should also appear the same location that you downloaded your bag file to on your computer.
+
+Feel free to use this example to play around with the config such as filtering and map density.
