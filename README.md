@@ -192,7 +192,7 @@ After creating your extrinsics, and configuring your config, run the following t
 
 ```
 cd /home/user/catkin_ws
-./build/3d_map_builder/3d_map_builder_build_map -config_file /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_CONFIG.json -extrinsics /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_EXTRINSICS.json -pose_file /home/user/data/poses.json -bag_file /home/user/data/sim_data.bag 
+./build/3d_map_builder/3d_map_builder_build_map -config_file /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_CONFIG.json -extrinsics /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_EXTRINSICS.json -pose_file /home/user/data/poses.json -bag_file /home/user/data/sim_data.bag -output_directory /home/user/data/
 ```
 
 That's it! Your maps will be output to the /home/user/data/ on your docker container, and should also appear the same location that you downloaded your bag file to on your computer.

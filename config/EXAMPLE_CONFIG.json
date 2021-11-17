@@ -11,14 +11,6 @@
       "remove_outside_points": true,
       "cropbox_min": [-50, -50, -50],
       "cropbox_max": [50, 50, 50]
-    },
-    {
-      "topic": "/vvlp/velodyne_points",
-      "frame": "vvlp_link",
-      "use_cropbox": true,
-      "remove_outside_points": true,
-      "cropbox_min": [-2, -10, -4],
-      "cropbox_max": [10, 10, 4]
     }
   ],
   "input_filters":[
