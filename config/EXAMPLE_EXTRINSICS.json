@@ -1,0 +1,15 @@
+{
+  "type": "extrinsic_calibration",
+  "date": "2021_11_16",
+  "method": "sim_ground_truth",
+  "calibrations": [
+        {
+        "to_frame": "base_link",
+        "from_frame": "hvlp_link",
+        "transform": [1.00000,   0.00000,   0.00000,   0.21000,
+                      0.00000,   1.00000,   0.00000,   0.00000,
+                      0.00000,   0.00000,   1.00000,   0.35200,
+                      0.00000,   0.00000,   0.00000,   1.00000]
+        }
+  ]
+}
