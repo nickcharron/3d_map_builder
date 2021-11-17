@@ -45,15 +45,11 @@ install_libbeam()
   # Ensure that Beam install scripts are installed
   LIBBEAM_SRC="$SRC_DIR/libbeam"
   if [ -d $LIBBEAM_SRC ]; then
-      ## TODO: edit this
-      echo "libbeam found. MAKE SURE YOU ARE ON VERSION v1.0"
+      echo "libbeam found. MAKE SURE YOU ARE ON VERSION v1.0.0 (latest tested version)"
   else
       echo "Cloning libbeam into: $SRC_DIR"
       cd $SRC_DIR 
-      
-      # TODO: uncomment this and delete the rest once merged and version created
-      # git clone --depth 1 -b v1.0 https://github.com/BEAMRobotics/libbeam.git
-      git clone --depth 1 -b update_cmake https://github.com/BEAMRobotics/libbeam.git
+      git clone --depth 1 -b v1.0.0 https://github.com/BEAMRobotics/libbeam.git
   fi
 
   INSTALL_LIBBEAM_LOCALLY_=$USING_CATKIN
