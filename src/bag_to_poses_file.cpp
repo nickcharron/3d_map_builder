@@ -18,7 +18,7 @@ DEFINE_string(output_path, "",
 DEFINE_validator(output_path, &beam::gflags::ValidateDirMustExist);
 DEFINE_string(output_type, "JSON",
               "Type of path file to output. Default: JSON. Options: JSON, PLY, "
-              "PLY2, TXT");
+              "PLY2, TXT, PCD");
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
     pose_builder.WriteToPLY2(FLAGS_output_path);
   } else if (FLAGS_output_type == "TXT") {
     pose_builder.WriteToTXT(FLAGS_output_path);
+  } else if (FLAGS_output_type == "PCD") {
+    pose_builder.WriteCoordinateFramesToPCD(FLAGS_output_path);
   } else {
     BEAM_ERROR("Invalid output type, using default: JSON");
     pose_builder.WriteToJSON(FLAGS_output_path);
