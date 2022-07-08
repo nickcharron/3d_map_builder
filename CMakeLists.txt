@@ -49,6 +49,19 @@ target_link_libraries(${PROJECT_NAME}_build_map
   beam::mapping
 )
 
+add_executable(${PROJECT_NAME}_visualize_map
+  src/visualize_map.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_visualize_map
+  PUBLIC
+)
+
+target_link_libraries(${PROJECT_NAME}_visualize_map
+  beam::utils
+  beam::mapping
+)
+
 add_executable(${PROJECT_NAME}_loop_closed_paths_to_poses
   src/loop_closed_paths_to_poses.cpp
 )
@@ -88,6 +101,21 @@ target_include_directories(${PROJECT_NAME}_bag_to_poses_file
 )
 
 target_link_libraries(${PROJECT_NAME}_bag_to_poses_file
+  beam::utils
+  beam::mapping
+  beam::filtering
+  beam::calibration
+)
+
+add_executable(${PROJECT_NAME}_poses_to_poses_file
+  src/poses_to_poses_file.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_poses_to_poses_file
+  PUBLIC
+)
+
+target_link_libraries(${PROJECT_NAME}_poses_to_poses_file
   beam::utils
   beam::mapping
   beam::filtering
