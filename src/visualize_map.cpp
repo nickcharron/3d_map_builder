@@ -41,7 +41,7 @@ DEFINE_validator(candidate_frame, &beam::gflags::ValidateCannotBeEmpty);
  * @param[in] sensor_data
  * @param[in] sensor_frame
  */
-const beam_mapping::scan_data_type GetSensorData(
+const beam_mapping::scan_data_type GetScanData(
     beam_mapping::sensor_data_type &sensor_data, const std::string &sensor_frame) {
   if (sensor_data.find(sensor_frame) != sensor_data.end()) {
     return sensor_data[sensor_frame];
@@ -94,7 +94,7 @@ class HandEyeCalibration {
   }
 
   /**
-   * @brief Callback for adjusting extrinsic caliration of candidate sensor with
+   * @brief Callback for adjusting extrinsic calibration of candidate sensor with
    * respect to reference
    *
    * @param[in] point_cloud_tf
@@ -102,9 +102,10 @@ class HandEyeCalibration {
   void AdjustedExtrinsicsCallback(
       const map_builder::PointCloudTF &point_cloud_tf) {
     if ((point_cloud_tf.idx_start + point_cloud_tf.window_size) > max_size_) {
-      BEAM_WARN("starting index and window size exceeds scan data size of %d",
+      BEAM_WARN("starting index and window size exceeds scan data size of {}",
                 max_size_);
     }
+
     if (point_cloud_tf.save_data) {
       // convert message fields to transformation matrix
       Eigen::Matrix4d T_SENSOR_ADJUSTEDSENSOR;
@@ -140,7 +141,7 @@ class HandEyeCalibration {
 
   // variables
   size_t idx_start_{0};
-  size_t window_size_{200};
+  size_t window_size_{100};
   size_t max_size_;
   bool publish_reference_{true};
   std::string map_frame_{"world"};
@@ -170,9 +171,9 @@ int main(int argc, char *argv[]) {
   // get reference and candidate scan data
   beam_mapping::sensor_data_type sensor_data = map_builder.GetSensorData();
   beam_mapping::scan_data_type scan_data_reference =
-      GetSensorData(sensor_data, FLAGS_reference_frame);
+      GetScanData(sensor_data, FLAGS_reference_frame);
   beam_mapping::scan_data_type scan_data_candidate =
-      GetSensorData(sensor_data, FLAGS_candidate_frame);
+      GetScanData(sensor_data, FLAGS_candidate_frame);
 
   // node handle
   BEAM_INFO("Hand-Eye Calibration of reference and candidate sensors");
