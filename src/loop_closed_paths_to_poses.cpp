@@ -21,6 +21,8 @@ DEFINE_validator(output_path, &beam::gflags::ValidateDirMustExist);
 DEFINE_string(output_type, "JSON",
               "Type of path file to output. Default: JSON. Options: JSON, PLY, "
               "PLY2, TXT");
+DEFINE_int32(format_type, 1,
+             "Format type of output. Default: 1. Options: 1, 2, 3");
 DEFINE_bool(interpolate_corrections, true,
             "Setting this to true calculates a new correction for each "
             "high-rate pose by interpolating the loop closed poses. This makes "
@@ -40,18 +42,8 @@ int main(int argc, char* argv[]) {
                                      FLAGS_high_rate_poses_path_topic);
   }
 
-  // output poses
-  if (FLAGS_output_type == "JSON") {
-    pose_builder.WriteToJSON(FLAGS_output_path);
-  } else if (FLAGS_output_type == "PLY") {
-    pose_builder.WriteToPLY(FLAGS_output_path);
-  } else if (FLAGS_output_type == "PLY2") {
-    pose_builder.WriteToPLY2(FLAGS_output_path);
-  } else if (FLAGS_output_type == "TXT") {
-    pose_builder.WriteToTXT(FLAGS_output_path);
-  } else {
-    BEAM_ERROR("Invalid output type, using default: JSON");
-    pose_builder.WriteToJSON(FLAGS_output_path);
-  }
+  pose_builder.WriteToFile(FLAGS_output_path, FLAGS_output_type,
+                           FLAGS_format_type);
+
   return 0;
 }
