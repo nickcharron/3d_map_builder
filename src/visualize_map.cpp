@@ -38,29 +38,31 @@ DEFINE_validator(candidate_frame, &beam::gflags::ValidateCannotBeEmpty);
 /**
  * @brief Get sensor data for a specified sensor frame
  *
- * @param[in] sensor_data
- * @param[in] sensor_frame
+ * @param[in] sensor_data map of sensor frames and associated sensor_data
+ * @param[in] sensor_frame sensor frame id
  */
 const beam_mapping::scan_data_type GetScanData(
-    beam_mapping::sensor_data_type &sensor_data, const std::string &sensor_frame) {
+    beam_mapping::sensor_data_type &sensor_data,
+    const std::string &sensor_frame) {
   if (sensor_data.find(sensor_frame) != sensor_data.end()) {
     return sensor_data[sensor_frame];
   } else {
-    BEAM_CRITICAL("Invalid frame: %s. Ensure frame exists.", sensor_frame);
+    BEAM_CRITICAL("Invalid frame: {}. Ensure frame exists.", sensor_frame);
     throw std::invalid_argument{"Invalid frame. Ensure frame exists."};
   }
 }
 
-class HandEyeCalibration {
+class ManualCalibration {
  public:
   /**
    * @brief Explicit Constructor
    *
-   * @param[in] scan_data_reference
-   * @param[in] scan_data_candidate
+   * @param[in] scan_data_reference scan data for reference sensor
+   * @param[in] scan_data_candidate scan data for candidate sensor
    */
-  explicit HandEyeCalibration(const beam_mapping::scan_data_type &scan_data_reference,
-                              const beam_mapping::scan_data_type &scan_data_candidate)
+  explicit ManualCalibration(
+      const beam_mapping::scan_data_type &scan_data_reference,
+      const beam_mapping::scan_data_type &scan_data_candidate)
       : scan_data_reference_(scan_data_reference),
         scan_data_candidate_(scan_data_candidate),
         max_size_(scan_data_reference.first.size()) {
@@ -69,11 +71,12 @@ class HandEyeCalibration {
 
  private:
   /**
-   * @brief Processess scans for publication
+   * @brief Processes scans for publication
    *
-   * @param[in] scan_data
-   * @param[in] T_SENSOR_ADJUSTEDSENSOR
-   * @param[out] reference_cloud_msg
+   * @param[in] scan_data pair of vectors containing transformation and
+   * associated point clouds, respectively
+   * @param[in] T_SENSOR_ADJUSTEDSENSOR transform from sensor to adjusted sensor
+   * @param[out] cloud_msg combined point cloud for sensor over sliding window
    */
   sensor_msgs::PointCloud2 ProcessScans(
       const beam_mapping::scan_data_type &scan_data,
@@ -94,10 +97,11 @@ class HandEyeCalibration {
   }
 
   /**
-   * @brief Callback for adjusting extrinsic calibration of candidate sensor with
-   * respect to reference
+   * @brief Callback for adjusting extrinsic calibration of candidate sensor
+   * with respect to reference
    *
-   * @param[in] point_cloud_tf
+   * @param[in] point_cloud_tf transformation message containing extrinsic
+   * calibration adjustments
    */
   void AdjustedExtrinsicsCallback(
       const map_builder::PointCloudTF &point_cloud_tf) {
@@ -145,19 +149,18 @@ class HandEyeCalibration {
   size_t max_size_;
   bool publish_reference_{true};
   std::string map_frame_{"world"};
-  Eigen::Vector3f scan_voxel_size_{0.01, 0.01, 0.01};
   beam_mapping::scan_data_type scan_data_reference_;
   beam_mapping::scan_data_type scan_data_candidate_;
 
   // node properties
-  ros::NodeHandle nh_ = ros::NodeHandle{"hand_eye_calibration"};
+  ros::NodeHandle nh_ = ros::NodeHandle{"manual_calibration"};
   ros::Publisher reference_cloud_pub_ =
       nh_.advertise<sensor_msgs::PointCloud2>("reference_cloud", 1);
   ros::Publisher candidate_cloud_pub_ =
       nh_.advertise<sensor_msgs::PointCloud2>("candidate_cloud", 1);
   ros::Subscriber adjusted_extrinsics_sub_ =
       nh_.subscribe("adjusted_extrinsics", 10,
-                    &HandEyeCalibration::AdjustedExtrinsicsCallback, this);
+                    &ManualCalibration::AdjustedExtrinsicsCallback, this);
 };
 
 int main(int argc, char *argv[]) {
@@ -176,11 +179,13 @@ int main(int argc, char *argv[]) {
       GetScanData(sensor_data, FLAGS_candidate_frame);
 
   // node handle
-  BEAM_INFO("Hand-Eye Calibration of reference and candidate sensors");
+  BEAM_INFO(
+      "Manual calibration of candidate sensor with respect to reference "
+      "sensor");
   try {
-    ros::init(argc, argv, "hand_eye_calibration");
-    HandEyeCalibration hand_eye_calibration(scan_data_reference,
-                                            scan_data_candidate);
+    ros::init(argc, argv, "manual_calibration");
+    ManualCalibration manual_calibration(scan_data_reference,
+                                         scan_data_candidate);
     ros::Rate ros_rate(10);
     while (ros::ok()) {
       ros::spinOnce();
