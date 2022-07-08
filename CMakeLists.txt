@@ -1,16 +1,38 @@
 cmake_minimum_required(VERSION 3.14)
-project(3d_map_builder)
+project(map_builder)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
 find_package(
-  beam REQUIRED 
-  COMPONENTS 
+  beam REQUIRED
+  COMPONENTS
   utils
   mapping
   calibration
+)
+
+find_package(
+  catkin REQUIRED 
+  COMPONENTS
+  std_msgs
+  message_generation
+)
+
+add_message_files(
+  FILES
+  PointCloudTF.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
+catkin_package(
+  CATKIN_DEPENDS
+    message_runtime
 )
 
 ################ Executables ###################
@@ -70,4 +92,9 @@ target_link_libraries(${PROJECT_NAME}_bag_to_poses_file
   beam::mapping
   beam::filtering
   beam::calibration
+)
+
+install(DIRECTORY
+  launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
