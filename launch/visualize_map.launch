@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-  <node pkg="rqt_ez_publisher" type="rqt_ez_publisher" name="rqt_ez_publisher" args="--slider-file $(find map_builder)/config/visualize_map_config.yaml" />
-</launch>

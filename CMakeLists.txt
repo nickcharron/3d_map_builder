@@ -22,7 +22,7 @@ find_package(
 
 add_message_files(
   FILES
-  PointCloudTF.msg
+  ManualCalibrationMsg.msg
 )
 
 generate_messages(
@@ -49,15 +49,15 @@ target_link_libraries(${PROJECT_NAME}_build_map
   beam::mapping
 )
 
-add_executable(${PROJECT_NAME}_visualize_map
-  src/visualize_map.cpp
+add_executable(${PROJECT_NAME}_manual_calibration
+  src/manual_calibration.cpp
 )
 
-target_include_directories(${PROJECT_NAME}_visualize_map
+target_include_directories(${PROJECT_NAME}_manual_calibration
   PUBLIC
 )
 
-target_link_libraries(${PROJECT_NAME}_visualize_map
+target_link_libraries(${PROJECT_NAME}_manual_calibration
   beam::utils
   beam::mapping
 )

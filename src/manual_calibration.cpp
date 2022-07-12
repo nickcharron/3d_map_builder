@@ -4,41 +4,43 @@
 #include <beam_utils/gflags.h>
 #include <beam_utils/math.h>
 
-#include <map_builder/PointCloudTF.h>
+#include <map_builder/ManualCalibrationMsg.h>
 
 DEFINE_string(bag_file, "",
               "Full file path to bag file containing the 3D data. ");
 DEFINE_validator(bag_file, &beam::gflags::ValidateBagFileMustExist);
 DEFINE_string(
     config_file, "",
-    "Full file path to config file (ex. /path/to/config/config.json)");
+    "Full file path to config file (ex. /path/to/config/config.json). For "
+    "format, see map_builder/config/examples/EXAMPLE_CONFIG.json");
 DEFINE_validator(config_file, &beam::gflags::ValidateFileMustExist);
 DEFINE_string(pose_file, "",
               "full path to pose file. For format, see "
               "libbeam/beam_mapping/tests/test_data/PosesTests. You can create "
               "this using the bag_to_poses executable.");
 DEFINE_validator(pose_file, &beam::gflags::ValidateFileMustExist);
-DEFINE_string(
-    extrinsics, "",
-    "Full file path to extrinsics json config file. For format, see "
-    "libbeam/beam_mapping/tests/test_data/MapBuilderTests/extrinsics.json");
+DEFINE_string(extrinsics, "",
+              "Full file path to extrinsics json config file. For format, see "
+              "map_builder/config/examples/EXAMPLE_EXTRINSICS.json");
 DEFINE_validator(extrinsics, &beam::gflags::ValidateJsonFileMustExist);
 DEFINE_string(poses_moving_frame, "",
               "optional moving frame associated with the poses. This needs to "
               "match a frame in the extrinsics. If not provided, it will use "
               "the frame from the poses file. Otherwise, it will override.");
-DEFINE_string(reference_frame, "",
-              "sensor frame that will be referenced for hand-eye calibration");
+DEFINE_string(
+    reference_frame, "",
+    "sensor frame id of sensor that will be referenced for manual calibration");
 DEFINE_validator(reference_frame, &beam::gflags::ValidateCannotBeEmpty);
 DEFINE_string(candidate_frame, "",
-              "sensor frame that will be matched to reference sensor during "
-              "hand-eye calibration");
+              "sensor frame id of sensor that will be matched to reference "
+              "sensor during manual calibration");
 DEFINE_validator(candidate_frame, &beam::gflags::ValidateCannotBeEmpty);
 
 /**
  * @brief Get sensor data for a specified sensor frame
  *
- * @param[in] sensor_data map of sensor frames and associated sensor_data
+ * @param[in] sensor_data unordered map of sensor frames and associated
+ * sensor_data
  * @param[in] sensor_frame sensor frame id
  */
 const beam_mapping::scan_data_type GetScanData(
@@ -73,7 +75,7 @@ class ManualCalibration {
   /**
    * @brief Processes scans for publication
    *
-   * @param[in] scan_data pair of vectors containing transformation and
+   * @param[in] scan_data pair of vectors containing transformations and
    * associated point clouds, respectively
    * @param[in] T_SENSOR_ADJUSTEDSENSOR transform from sensor to adjusted sensor
    * @param[out] cloud_msg combined point cloud for sensor over sliding window
@@ -104,29 +106,35 @@ class ManualCalibration {
    * calibration adjustments
    */
   void AdjustedExtrinsicsCallback(
-      const map_builder::PointCloudTF &point_cloud_tf) {
-    if ((point_cloud_tf.idx_start + point_cloud_tf.window_size) > max_size_) {
-      BEAM_WARN("starting index and window size exceeds scan data size of {}",
-                max_size_);
+      const map_builder::ManualCalibrationMsg &manual_calibration_msg) {
+    if ((manual_calibration_msg.idx_start +
+         manual_calibration_msg.window_size) > max_size_) {
+      BEAM_WARN(
+          "starting index and window size exceeds scan data size of {}. "
+          "Re-adjust values to suite.",
+          max_size_);
     }
 
-    if (point_cloud_tf.save_data) {
+    if (manual_calibration_msg.save_data) {
       // convert message fields to transformation matrix
       Eigen::Matrix4d T_SENSOR_ADJUSTEDSENSOR;
       Eigen::Quaterniond q;
-      Eigen::Vector3d p{point_cloud_tf.x, point_cloud_tf.y, point_cloud_tf.z};
-      beam::RPYtoQuaternionDeg(point_cloud_tf.roll, point_cloud_tf.pitch,
-                               point_cloud_tf.yaw, q);
+      Eigen::Vector3d p{manual_calibration_msg.x, manual_calibration_msg.y,
+                        manual_calibration_msg.z};
+      beam::RPYtoQuaternionDeg(manual_calibration_msg.roll,
+                               manual_calibration_msg.pitch,
+                               manual_calibration_msg.yaw, q);
       beam::QuaternionAndTranslationToTransformMatrix(q, p,
                                                       T_SENSOR_ADJUSTEDSENSOR);
 
       //  publish reference cloud
-      bool is_window_reset = (idx_start_ != point_cloud_tf.idx_start ||
-                              window_size_ != point_cloud_tf.window_size);
+      bool is_window_reset =
+          (idx_start_ != manual_calibration_msg.idx_start ||
+           window_size_ != manual_calibration_msg.window_size);
       if ((publish_reference_ || is_window_reset) &&
           reference_cloud_pub_.getNumSubscribers() > 0) {
-        idx_start_ = point_cloud_tf.idx_start;
-        window_size_ = point_cloud_tf.window_size;
+        idx_start_ = manual_calibration_msg.idx_start;
+        window_size_ = manual_calibration_msg.window_size;
         publish_reference_ = false;
         BEAM_INFO("Publishing reference cloud ... \r");
         reference_cloud_pub_.publish(ProcessScans(scan_data_reference_));
