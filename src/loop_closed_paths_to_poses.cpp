@@ -20,7 +20,7 @@ DEFINE_string(output_path, "",
 DEFINE_validator(output_path, &beam::gflags::ValidateDirMustExist);
 DEFINE_string(
     output_type, "JSON",
-    "Type of path file to output. Default: JSON. Options: JSON, PLY, TXT");
+    "Type of path file to output. Default: JSON. Options: JSON, PLY, TXT, PCD");
 DEFINE_int32(format_type, 1,
              "Format type of output. Default: 1. Options: 1, 2, 3");
 DEFINE_bool(interpolate_corrections, true,
