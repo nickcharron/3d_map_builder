@@ -19,20 +19,18 @@ DEFINE_int32(in_format_type, 1,
 DEFINE_int32(out_format_type, 1,
              "Format type of output. Default: 1. Options: 1, 2, 3");
 DEFINE_string(desired_poses_moving_frame, "",
-              "Optionally specify frame in which poses are too be represented "
-              "in. This needs to "
-              "match a frame in the extrinsics.");
-DEFINE_string(
-    extrinsics, "",
-    "If 'desired_poses_moving_frame' is specified, provide the full file path "
-    "to extrinsics json config file. For format, see "
-    "libbeam/beam_mapping/tests/test_data/MapBuilderTests/extrinsics.json");
+              "Optionally specify frame in which poses are too be expressed. "
+              "This must match a frame in the extrinsics.");
+DEFINE_string(extrinsics, "",
+              "Full file path to extrinsics json config file. The "
+              "desired_poses_moving_frame id must be specified. For format, "
+              "see map_builder/config/examples/EXAMPLE_EXTRINSICS.json");
 DEFINE_string(
     poses_moving_frame, "",
-    "If 'desired_poses_moving_frame' is specified, optionally specify the "
-    "moving frame associated with the poses. This needs to "
-    "match a frame in the extrinsics. If not provided, it will use "
-    "the frame from the poses file. Otherwise, it will override.");
+    "If desired_poses_moving_frame is specified, optionally specify the "
+    "moving frame associated with the poses. This must match a frame in the "
+    "extrinsics. If not provided, it will use the frame from the poses file. "
+    "Otherwise, it will override.");
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -55,7 +53,7 @@ int main(int argc, char* argv[]) {
     // load extrinsics
     beam_calibration::TfTree extrinsics;
     extrinsics.LoadJSON(FLAGS_extrinsics);
-    Eigen::Matrix4d T_MOVINGFRAME_DESIREDMOVINGFRAME =
+    const Eigen::Matrix4d T_MOVINGFRAME_DESIREDMOVINGFRAME =
         extrinsics
             .GetTransformEigen(FLAGS_desired_poses_moving_frame,
                                poses_moving_frame)

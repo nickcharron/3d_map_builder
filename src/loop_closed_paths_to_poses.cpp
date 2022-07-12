@@ -18,9 +18,9 @@ DEFINE_validator(high_rate_poses_path_topic,
 DEFINE_string(output_path, "",
               "Full path to output directory. Directory must exist.");
 DEFINE_validator(output_path, &beam::gflags::ValidateDirMustExist);
-DEFINE_string(output_type, "JSON",
-              "Type of path file to output. Default: JSON. Options: JSON, PLY, "
-              "PLY2, TXT");
+DEFINE_string(
+    output_type, "JSON",
+    "Type of path file to output. Default: JSON. Options: JSON, PLY, TXT");
 DEFINE_int32(format_type, 1,
              "Format type of output. Default: 1. Options: 1, 2, 3");
 DEFINE_bool(interpolate_corrections, true,

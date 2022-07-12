@@ -8,7 +8,8 @@ DEFINE_string(bag_file, "",
 DEFINE_validator(bag_file, &beam::gflags::ValidateBagFileMustExist);
 DEFINE_string(
     config_file, "",
-    "Full file path to config file (ex. /path/to/config/config.json)");
+    "Full file path to config file (ex. /path/to/config/config.json). For "
+    "format, see map_builder/config/examples/EXAMPLE_CONFIG.json");
 DEFINE_validator(config_file, &beam::gflags::ValidateFileMustExist);
 DEFINE_string(pose_file, "",
               "full path to pose file. For format, see "
@@ -19,10 +20,9 @@ DEFINE_string(output_directory, "",
               "Full file output directory for map to save to. This directory "
               "must exist.");
 DEFINE_validator(output_directory, &beam::gflags::ValidateDirMustExist);
-DEFINE_string(
-    extrinsics, "",
-    "Full file path to extrinsics json config file. For format, see "
-    "libbeam/beam_mapping/tests/test_data/MapBuilderTests/extrinsics.json");
+DEFINE_string(extrinsics, "",
+              "Full file path to extrinsics json config file. For format, see "
+              "map_builder/config/examples/EXAMPLE_EXTRINSICS.json");
 DEFINE_validator(extrinsics, &beam::gflags::ValidateJsonFileMustExist);
 DEFINE_string(poses_moving_frame, "",
               "optional moving frame associated with the poses. This needs to "

@@ -11,7 +11,7 @@ DEFINE_validator(bag, &beam::gflags::ValidateBagFileMustExist);
 DEFINE_string(
     topic, "",
     "Topic associated with the odometry or path messages. If a path message "
-    "type if provided, this will only output the last path message.");
+    "type is provided, this will only output the last path message.");
 DEFINE_validator(topic, &beam::gflags::ValidateCannotBeEmpty);
 DEFINE_string(output_path, "",
               "Full path to output directory. Directory must exist.");
