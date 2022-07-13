@@ -22,7 +22,7 @@ DEFINE_string(
     output_type, "JSON",
     "Type of path file to output. Default: JSON. Options: JSON, PLY, TXT, PCD");
 DEFINE_int32(format_type, 1,
-             "Format type of output. Default: 1. Options: 1, 2, 3");
+             "Format type of output. Default: 1. Options: 1, 2");
 DEFINE_bool(interpolate_corrections, true,
             "Setting this to true calculates a new correction for each "
             "high-rate pose by interpolating the loop closed poses. This makes "

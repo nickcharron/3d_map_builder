@@ -22,7 +22,7 @@ DEFINE_string(
     output_type, "JSON",
     "Type of pose file to output. Default: JSON. Options: JSON, PLY, TXT, PCD");
 DEFINE_int32(format_type, 1,
-             "Format type of output. Default: 1. Options: 1, 2, 3");
+             "Format type of output. Default: 1. Options: 1, 2");
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);

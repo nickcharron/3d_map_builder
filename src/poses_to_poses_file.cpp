@@ -15,9 +15,9 @@ DEFINE_string(
     output_type, "JSON",
     "Type of pose file to output. Default: JSON. Options: JSON, PLY, TXT, PCD");
 DEFINE_int32(in_format_type, 1,
-             "Format type of output. Default: 1. Options: 1, 2, 3");
+             "Format type of output. Default: 1. Options: 1, 2");
 DEFINE_int32(out_format_type, 1,
-             "Format type of output. Default: 1. Options: 1, 2, 3");
+             "Format type of output. Default: 1. Options: 1, 2");
 DEFINE_string(desired_poses_moving_frame, "",
               "Optionally specify frame in which poses are too be expressed. "
               "This must match a frame in the extrinsics.");

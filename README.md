@@ -75,7 +75,6 @@ This is the main executable for building maps. For help on running the exectuabl
 
 All parameters can be configured in the input config json. For an example config file, see config/examples/EXAMPLE_CONFIG.json
 
-
 **Inputs:**
 * This code is built to work with a ROS bag and an optional pose file:
     * ROS Bag: This should contain all 3D data of type sensor_msgs/PointCloud2. You may have any number of topics that can be combined into a map or output as separate maps. This can also contain the trajectory as nav_msgs/Path or nav_msgs/Odometry, if a pose file is not provided.
@@ -165,14 +164,13 @@ and run the executable. For more information on how to run the executable, run:
 ./path_to_build_dir/manual_calibration.cpp --help
 ```
 
-
 This will bring up a custom rviz window, where `/manual_calibration/reference_cloud` and `/manual_calibration/candidate_cloud` topics are subscribed to and visualized. The `reference_cloud` and `candidate_cloud` topics have constructions of the user specified reference sensor and candiate sensor, respectively, published over a window of size `window_size` from a starting index `start_index`. These manually adjustable parameters are available in the rqt_ez_publisher window that opens upon launch, with  `x,y,z,roll,pitch,yaw` parameters available for manual extrinsic calibration. When checking off `save_data`, reference and candidate clouds are published as shown below.
 
 <img src="docs/ManualCalibrationRviz.png" width="800">
 
 <img src="docs/ManualCalibrationRqtEzPublisher.png" width="800">
 
-Once the user is satisfied with the adjustment, `x,y,z,roll,pitch,yaw` can then be used to correct for the existing extrinsic calibration for the candidate sensor via hand calculations. 
+Once the user is satisfied with the adjustment, `x,y,z,roll,pitch,yaw` can then be used to correct for the existing extrinsic calibration for the candidate sensor via hand calculations.
 
 ## Example
 
