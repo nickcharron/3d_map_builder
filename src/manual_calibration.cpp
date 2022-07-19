@@ -43,7 +43,7 @@ DEFINE_validator(candidate_frame, &beam::gflags::ValidateCannotBeEmpty);
  * sensor_data
  * @param[in] sensor_frame sensor frame id
  */
-const beam_mapping::scan_data_type GetScanData(
+const beam_mapping::pose_and_scan_data_type GetPoseAndScanData(
     beam_mapping::sensor_data_type &sensor_data,
     const std::string &sensor_frame) {
   if (sensor_data.find(sensor_frame) != sensor_data.end()) {
@@ -59,15 +59,15 @@ class ManualCalibration {
   /**
    * @brief Explicit Constructor
    *
-   * @param[in] scan_data_reference scan data for reference sensor
-   * @param[in] scan_data_candidate scan data for candidate sensor
+   * @param[in] pose_and_scan_data_reference scan data for reference sensor
+   * @param[in] pose_and_scan_data_candidate scan data for candidate sensor
    */
   explicit ManualCalibration(
-      const beam_mapping::scan_data_type &scan_data_reference,
-      const beam_mapping::scan_data_type &scan_data_candidate)
-      : scan_data_reference_(scan_data_reference),
-        scan_data_candidate_(scan_data_candidate),
-        max_size_(scan_data_reference.first.size()) {
+      const beam_mapping::pose_and_scan_data_type &pose_and_scan_data_reference,
+      const beam_mapping::pose_and_scan_data_type &pose_and_scan_data_candidate)
+      : pose_and_scan_data_reference_(pose_and_scan_data_reference),
+        pose_and_scan_data_candidate_(pose_and_scan_data_candidate),
+        max_size_(pose_and_scan_data_reference.first.size()) {
     ros::Time::init();
   };
 
@@ -81,7 +81,7 @@ class ManualCalibration {
    * @param[out] cloud_msg combined point cloud for sensor over sliding window
    */
   sensor_msgs::PointCloud2 ProcessScans(
-      const beam_mapping::scan_data_type &scan_data,
+      const beam_mapping::pose_and_scan_data_type &scan_data,
       const Eigen::Matrix4d &T_SENSOR_ADJUSTEDSENSOR =
           Eigen::Matrix4d::Identity()) {
     // transform scans into world frame over window
@@ -115,7 +115,7 @@ class ManualCalibration {
           max_size_);
     }
 
-    if (manual_calibration_msg.save_data) {
+    if (manual_calibration_msg.publish) {
       // convert message fields to transformation matrix
       Eigen::Matrix4d T_SENSOR_ADJUSTEDSENSOR;
       Eigen::Quaterniond q;
@@ -137,15 +137,16 @@ class ManualCalibration {
         window_size_ = manual_calibration_msg.window_size;
         publish_reference_ = false;
         BEAM_INFO("Publishing reference cloud ... \r");
-        reference_cloud_pub_.publish(ProcessScans(scan_data_reference_));
+        reference_cloud_pub_.publish(
+            ProcessScans(pose_and_scan_data_reference_));
         BEAM_INFO("published");
       }
 
       // publish candidate cloud
       if (candidate_cloud_pub_.getNumSubscribers() > 0) {
         BEAM_INFO("Publishing candidate cloud ... \r");
-        candidate_cloud_pub_.publish(
-            ProcessScans(scan_data_candidate_, T_SENSOR_ADJUSTEDSENSOR));
+        candidate_cloud_pub_.publish(ProcessScans(pose_and_scan_data_candidate_,
+                                                  T_SENSOR_ADJUSTEDSENSOR));
         BEAM_INFO("published");
       }
     }
@@ -157,8 +158,8 @@ class ManualCalibration {
   size_t max_size_;
   bool publish_reference_{true};
   std::string map_frame_{"world"};
-  beam_mapping::scan_data_type scan_data_reference_;
-  beam_mapping::scan_data_type scan_data_candidate_;
+  beam_mapping::pose_and_scan_data_type pose_and_scan_data_reference_;
+  beam_mapping::pose_and_scan_data_type pose_and_scan_data_candidate_;
 
   // node properties
   ros::NodeHandle nh_ = ros::NodeHandle{"manual_calibration"};
@@ -181,10 +182,10 @@ int main(int argc, char *argv[]) {
 
   // get reference and candidate scan data
   beam_mapping::sensor_data_type sensor_data = map_builder.GetSensorData();
-  beam_mapping::scan_data_type scan_data_reference =
-      GetScanData(sensor_data, FLAGS_reference_frame);
-  beam_mapping::scan_data_type scan_data_candidate =
-      GetScanData(sensor_data, FLAGS_candidate_frame);
+  beam_mapping::pose_and_scan_data_type pose_and_scan_data_reference =
+      GetPoseAndScanData(sensor_data, FLAGS_reference_frame);
+  beam_mapping::pose_and_scan_data_type pose_and_scan_data_candidate =
+      GetPoseAndScanData(sensor_data, FLAGS_candidate_frame);
 
   // node handle
   BEAM_INFO(
@@ -192,8 +193,8 @@ int main(int argc, char *argv[]) {
       "sensor");
   try {
     ros::init(argc, argv, "manual_calibration");
-    ManualCalibration manual_calibration(scan_data_reference,
-                                         scan_data_candidate);
+    ManualCalibration manual_calibration(pose_and_scan_data_reference,
+                                         pose_and_scan_data_candidate);
     ros::Rate ros_rate(10);
     while (ros::ok()) {
       ros::spinOnce();

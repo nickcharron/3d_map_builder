@@ -164,7 +164,7 @@ and run the executable. For more information on how to run the executable, run:
 ./path_to_build_dir/manual_calibration.cpp --help
 ```
 
-This will bring up a custom rviz window, where `/manual_calibration/reference_cloud` and `/manual_calibration/candidate_cloud` topics are subscribed to and visualized. The `reference_cloud` and `candidate_cloud` topics have constructions of the user specified reference sensor and candiate sensor, respectively, published over a window of size `window_size` from a starting index `start_index`. These manually adjustable parameters are available in the rqt_ez_publisher window that opens upon launch, with  `x,y,z,roll,pitch,yaw` parameters available for manual extrinsic calibration. When checking off `save_data`, reference and candidate clouds are published as shown below.
+This will bring up a custom rviz window, where `/manual_calibration/reference_cloud` and `/manual_calibration/candidate_cloud` topics are subscribed to and visualized. The `reference_cloud` and `candidate_cloud` topics have constructions of the user specified reference sensor and candidate sensor, respectively, published over a window of size `window_size` from a starting index `start_index`. These manually adjustable parameters are available in the rqt_ez_publisher window that opens upon launch, with  `x,y,z,roll,pitch,yaw` parameters available for manual extrinsic calibration. When checking off `publish`, reference and candidate clouds are published as shown below. Note that for all topics shown in the rqt_ez_publisher window, `repeat` should remain unchecked.
 
 <img src="docs/ManualCalibrationRviz.png" width="800">
 

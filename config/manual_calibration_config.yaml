@@ -12,7 +12,7 @@ settings:
     is_repeat: false
     max: 5.0
     min: -5.0
-  /manual_calibration/adjusted_extrinsics/save_data:
+  /manual_calibration/adjusted_extrinsics/publish:
     is_repeat: false
     max: 0
     min: 0
@@ -45,4 +45,4 @@ texts:
 - /manual_calibration/adjusted_extrinsics/roll
 - /manual_calibration/adjusted_extrinsics/pitch
 - /manual_calibration/adjusted_extrinsics/yaw
-- /manual_calibration/adjusted_extrinsics/save_data
+- /manual_calibration/adjusted_extrinsics/publish
