@@ -3,7 +3,7 @@ set -e
 
 # Get important directories
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SRC_DIR="${SCRIPT_DIR//'/3d_map_builder/scripts'}"
+SRC_DIR="${SCRIPT_DIR//'/map_builder/scripts'}"
 
 USING_CATKIN=0
 NUM_PROCESSORS=1
@@ -81,12 +81,12 @@ install_routine()
   if(( $USING_CATKIN == 1 ))
   then
       cd $SRC_DIR
-      echo "Building libbeam and 3d_map_builder"
-      bash 3d_map_builder/scripts/build_catkin_ws.bash
+      echo "Building libbeam and map_builder"
+      bash map_builder/scripts/build_catkin_ws.bash
       echo "Install complete."
   else 
       cd $SRC_DIR
-      cd 3d_map_builder
+      cd map_builder
       mkdir -p build
       cd build
       cmake ..

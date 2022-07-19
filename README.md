@@ -73,13 +73,12 @@ This is the main executable for building maps. For help on running the exectuabl
 ./path_to_build_dir/3d_map_builder_build_map --help
 ```
 
-All parameters can be configured in the input config json. For an example config file, see docs/ConfigExample.json
-
+All parameters can be configured in the input config json. For an example config file, see config/examples/EXAMPLE_CONFIG.json
 
 **Inputs:**
 * This code is built to work with a ROS bag and an optional pose file:
     * ROS Bag: This should contain all 3D data of type sensor_msgs/PointCloud2. You may have any number of topics that can be combined into a map or output as separate maps. This can also contain the trajectory as nav_msgs/Path or nav_msgs/Odometry, if a pose file is not provided.
-    * Pose file: the pose file should contain all trajectory information. We have multiple pose file data formats including json, ply, pcd, and txt. For example formats, see: libbeam/beam_mapping/tests/test_data/PosesTests/. You can create these file formats using one of the executables which convert topics from a bag to a pose file, or by using the Poses class in: libbeam/beam_mapping/include/beam_mapping/Poses.h
+    * Pose file: the pose file should contain all trajectory information. We have multiple pose file data formats including json, ply, pcd, and txt. For example formats, see: libbeam/beam_mapping/tests/test_data/PosesTests/. You can create these file formats using the bag_to_poses_file executable which convert topics from a bag to a pose file, or the poses_to_poses_file executable which converts a pose file to another pose file.
 
 **Config Params:**
 * **intermediary_map_size**: numer of scans to aggregate into an intermediary map before applying intermediary filters
@@ -131,7 +130,6 @@ For more information on how to run the executable, run:
 ./path_to_build_dir/3d_map_builder_loop_closed_paths_to_poses --help
 ```
 
-
 **Methodology:** This works by adding all poses into ordered maps, sorted by timestamp. We then iterate through each high rate pose, and when the timestamp align with, or exceeds a loop closed path, we calculate the correction T_WORLDCORRECTED_WORLDESTIMATED. Where world estimated, is the etimated world frame of the high rate poses, and world corrected is the estimated world frame of the loop closed poses. There are two options to apply these corrections:
 1. we apply the same correction to all high rate poses between loop closed poses. This generally gives a discontinuous trajectory, but may be more precise because it does the least amount of interpolation
 2. for each high rate pose, we interpolate a correction and apply that correction to the high rate pose. This provides a more continuous trajectory estimate, and this result should be similar to the result of included all high rate poses in the pose-graph optimization used during loop closure.
@@ -141,6 +139,38 @@ The figure below shows the difference between interpolating the corrections or n
 ![Corrected High Rate Poses No Interpolation](docs/CorrectedHighRatePosesNoInterpolation.png)
 
 ![Corrected High Rate Poses With Interpolation](docs/CorrectedHighRatePosesWithInterpolation.png)
+
+### poses_to_poses_file
+
+This tool can be used to convert a pose file to another pose file of any type (txt, json, ply, pcd). Additionally, there is the option to specify the frame in which poses are to be expressed. This is useful when comparing SLAM trajectories, as large offsets between differently assumed base_link frames can lead to incorrect comparisons.
+
+For more information on how to run the executable, run:
+
+```
+./path_to_build_dir/3d_map_builder_poses_to_poses_file --help
+```
+
+### manual_calibration
+
+This tool can be used to manually adjust the extrinsic calibration of a candidate sensor (ex. multibeam sonar, vertically oriented lidar) with respect to a reference sensor (ex. horizontally oriented lidar). To begin, launch:
+
+```
+roslaunch map_builder manual_calibration.launch
+```
+
+and run the executable. For more information on how to run the executable, run:
+
+```
+./path_to_build_dir/manual_calibration.cpp --help
+```
+
+This will bring up a custom rviz window, where `/manual_calibration/reference_cloud` and `/manual_calibration/candidate_cloud` topics are subscribed to and visualized. The `reference_cloud` and `candidate_cloud` topics have constructions of the user specified reference sensor and candidate sensor, respectively, published over a window of size `window_size` from a starting index `start_index`. These manually adjustable parameters are available in the rqt_ez_publisher window that opens upon launch, with  `x,y,z,roll,pitch,yaw` parameters available for manual extrinsic calibration. When checking off `publish`, reference and candidate clouds are published as shown below. Note that for all topics shown in the rqt_ez_publisher window, `repeat` should remain unchecked.
+
+<img src="docs/ManualCalibrationRviz.png" width="800">
+
+<img src="docs/ManualCalibrationRqtEzPublisher.png" width="800">
+
+Once the user is satisfied with the adjustment, `x,y,z,roll,pitch,yaw` can then be used to correct for the existing extrinsic calibration for the candidate sensor via hand calculations.
 
 ## Example
 

@@ -1,0 +1,48 @@
+publish_interval: 100
+settings:
+  /manual_calibration/adjusted_extrinsics/idx_start:
+    is_repeat: false
+    max: 1000
+    min: 0
+  /manual_calibration/adjusted_extrinsics/pitch:
+    is_repeat: false
+    max: 5.0
+    min: -5.0
+  /manual_calibration/adjusted_extrinsics/roll:
+    is_repeat: false
+    max: 5.0
+    min: -5.0
+  /manual_calibration/adjusted_extrinsics/publish:
+    is_repeat: false
+    max: 0
+    min: 0
+  /manual_calibration/adjusted_extrinsics/window_size:
+    is_repeat: false
+    max: 300
+    min: 10
+  /manual_calibration/adjusted_extrinsics/x:
+    is_repeat: false
+    max: 0.2
+    min: -0.2
+  /manual_calibration/adjusted_extrinsics/y:
+    is_repeat: false
+    max: 0.2
+    min: -0.2
+  /manual_calibration/adjusted_extrinsics/yaw:
+    is_repeat: false
+    max: 5.0
+    min: -5.0
+  /manual_calibration/adjusted_extrinsics/z:
+    is_repeat: false
+    max: 0.2
+    min: -0.2
+texts:
+- /manual_calibration/adjusted_extrinsics/idx_start
+- /manual_calibration/adjusted_extrinsics/window_size
+- /manual_calibration/adjusted_extrinsics/x
+- /manual_calibration/adjusted_extrinsics/y
+- /manual_calibration/adjusted_extrinsics/z
+- /manual_calibration/adjusted_extrinsics/roll
+- /manual_calibration/adjusted_extrinsics/pitch
+- /manual_calibration/adjusted_extrinsics/yaw
+- /manual_calibration/adjusted_extrinsics/publish
