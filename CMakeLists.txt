@@ -62,6 +62,11 @@ target_link_libraries(${PROJECT_NAME}_manual_calibration
   beam::mapping
 )
 
+add_dependencies(${PROJECT_NAME}_manual_calibration
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
 add_executable(${PROJECT_NAME}_loop_closed_paths_to_poses
   src/loop_closed_paths_to_poses.cpp
 )
