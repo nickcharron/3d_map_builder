@@ -18,9 +18,11 @@ DEFINE_validator(topic, &beam::gflags::ValidateCannotBeEmpty);
 DEFINE_string(output_path, "",
               "Full path to output directory. Directory must exist.");
 DEFINE_validator(output_path, &beam::gflags::ValidateDirMustExist);
-DEFINE_string(output_type, "JSON",
-              "Type of path file to output. Default: JSON. Options: JSON, PLY, "
-              "PLY2, TXT");
+DEFINE_string(
+    output_type, "JSON",
+    "Type of pose file to output. Default: JSON. Options: JSON, PLY, TXT, PCD");
+DEFINE_int32(format_type, 1,
+             "Format type of output. Default: 1. Options: 1, 2");
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -67,18 +69,8 @@ int main(int argc, char* argv[]) {
     // output poses
     std::string output_file =
         FLAGS_output_path + "path" + std::to_string(counter);
-    if (FLAGS_output_type == "JSON") {
-      pose_builder.WriteToJSON(output_file);
-    } else if (FLAGS_output_type == "PLY") {
-      pose_builder.WriteToPLY(output_file);
-    } else if (FLAGS_output_type == "PLY2") {
-      pose_builder.WriteToPLY2(output_file);
-    } else if (FLAGS_output_type == "TXT") {
-      pose_builder.WriteToTXT(output_file);
-    } else {
-      BEAM_ERROR("Invalid output type, using default: JSON");
-      pose_builder.WriteToJSON(output_file);
-    }
+    pose_builder.WriteToFile(FLAGS_output_path, FLAGS_output_type,
+                             FLAGS_format_type);
   }
 
   return 0;

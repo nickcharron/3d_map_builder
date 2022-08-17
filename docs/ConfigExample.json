@@ -1,7 +1,7 @@
 {
   "pose_file": "test_poses.json",
   "bag_file_path": "test.bag",
-  "save_directory": "/userhome/results/3d_map_builder/",
+  "save_directory": "/userhome/results/map_builder/",
   "extrinsics_file": "/userhome/config/calibrations/ig2/extrinsics.json",
   "moving_frame": "",
   "fixed_frame": "",  

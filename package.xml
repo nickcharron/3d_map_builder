@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>3d_map_builder</name>
+  <name>map_builder</name>
   <version>0.1.0</version>
   <description>tool for building 3d maps from a SLAM trajectory and 3D sensor data in a ROS bag</description>
 
@@ -11,6 +11,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>libbeam</build_depend>
+  <build_depend>message_generation</build_depend>
 
   <depend>boost</depend>
   <depend>eigen</depend>
@@ -21,4 +22,5 @@
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
 
+  <exec_depend>message_runtime</exec_depend>
 </package>

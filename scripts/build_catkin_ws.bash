@@ -16,7 +16,7 @@ IGNORE_BEAM_UTILS_=0
 
 # Get important directories
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-SRC_DIR="${SCRIPT_DIR//'/3d_map_builder/scripts'}"
+SRC_DIR="${SCRIPT_DIR//'/map_builder/scripts'}"
 
 # get number of processors for high-load installs
 NUM_PROCESSORS=1
