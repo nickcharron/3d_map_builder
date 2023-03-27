@@ -8,7 +8,7 @@ If you use this tool for any research work, please cite the above paper.
 
 ## Dependencies
 
-This repo only depends on our internal [libbeam](https://github.com/BEAMRobotics/libbeam) library. We currently have tested on Ubuntu18 with libbeam v1.0.
+This repo only depends on our internal [libbeam](https://github.com/BEAMRobotics/libbeam) library. We currently have tested on Ubuntu18 with libbeam v1.1.0.
 
 Libeam depends on the following:
 
