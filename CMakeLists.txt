@@ -127,6 +127,19 @@ target_link_libraries(${PROJECT_NAME}_poses_to_poses_file
   beam::calibration
 )
 
+add_executable(${PROJECT_NAME}_append_trajectory
+  src/append_trajectory.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_append_trajectory
+  PUBLIC
+)
+
+target_link_libraries(${PROJECT_NAME}_append_trajectory
+  beam::utils
+  beam::mapping
+)
+
 install(DIRECTORY
   launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
