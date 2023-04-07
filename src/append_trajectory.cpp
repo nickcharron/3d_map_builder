@@ -25,11 +25,19 @@ int main(int argc, char* argv[]) {
 
   beam_mapping::Poses poses_append;
   poses_append.LoadFromJSON(FLAGS_append);
-  auto ts_append = poses_trajectory.GetTimeStamps();
-  auto append = poses_trajectory.GetPoses();
+  auto ts_append = poses_append.GetTimeStamps();
+  auto append = poses_append.GetPoses();
 
   const ros::Time& t_last = ts_trajectory.back();
   const Eigen::Matrix4d& T_WORLD_MOVING1_last = trajectory.back();
+
+  BEAM_INFO("trajectory time range: [{}, {}]s, duration: {}s",
+            ts_trajectory.front().sec, ts_trajectory.back().sec,
+            -ts_trajectory.front().sec + ts_trajectory.back().sec);
+  BEAM_INFO(
+      "appending using trajectory with time range: [{}, {}]s, duration: {}s",
+      ts_append.front().sec, ts_append.back().sec,
+      -ts_append.front().sec + ts_append.back().sec);
 
   beam_mapping::Poses poses_final = poses_trajectory;
   Eigen::Matrix4d T_WORLD_MOVING2_start;
@@ -62,6 +70,13 @@ int main(int argc, char* argv[]) {
     poses_final.AddSinglePose(T_WORLD_MOVING1_k);
   }
 
+  BEAM_INFO("writing final trajectory with {} poses having a time range: [{}, "
+            "{}]s, duration: {}",
+            poses_final.GetPoses().size(),
+            poses_final.GetTimeStamps().front().sec,
+            poses_final.GetTimeStamps().back().sec,
+            -poses_final.GetTimeStamps().front().sec +
+                poses_final.GetTimeStamps().back().sec);
   poses_final.WriteToFile(FLAGS_output_path, FLAGS_output_type);
 
   return 0;
