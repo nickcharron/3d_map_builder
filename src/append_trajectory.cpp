@@ -20,13 +20,13 @@ int main(int argc, char* argv[]) {
 
   beam_mapping::Poses poses_trajectory;
   poses_trajectory.LoadFromJSON(FLAGS_trajectory);
-  auto ts_trajectory = poses_trajectory.GetTimeStamps();
-  auto trajectory = poses_trajectory.GetPoses();
+  const auto& ts_trajectory = poses_trajectory.GetTimeStamps();
+  const auto& trajectory = poses_trajectory.GetPoses();
 
   beam_mapping::Poses poses_append;
   poses_append.LoadFromJSON(FLAGS_append);
-  auto ts_append = poses_append.GetTimeStamps();
-  auto append = poses_append.GetPoses();
+  const auto& ts_append = poses_append.GetTimeStamps();
+  const auto& append = poses_append.GetPoses();
 
   const ros::Time& t_last = ts_trajectory.back();
   const Eigen::Matrix4d& T_WORLD_MOVING1_last = trajectory.back();

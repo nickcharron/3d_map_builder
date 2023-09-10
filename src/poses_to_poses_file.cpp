@@ -45,9 +45,8 @@ int main(int argc, char* argv[]) {
     }
     const std::string poses_moving_frame = pose_builder.GetMovingFrame();
     if (poses_moving_frame.empty()) {
-      BEAM_ERROR(
-          "pose moving frame is empty and must be set as a command line "
-          "argument.");
+      BEAM_ERROR("pose moving frame is empty and must be set as a command line "
+                 "argument.");
     }
 
     // load extrinsics
@@ -60,7 +59,7 @@ int main(int argc, char* argv[]) {
             .matrix();
 
     // transform poses into desired frame
-    auto poses = pose_builder.GetPoses();
+    const auto& poses = pose_builder.GetPoses();
     for (auto& T_WORLD_MOVINGFRAME : poses) {
       T_WORLD_MOVINGFRAME *= T_MOVINGFRAME_DESIREDMOVINGFRAME;
     }
