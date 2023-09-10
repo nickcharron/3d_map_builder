@@ -99,8 +99,9 @@ All parameters can be configured in the input config json. For an example config
 ### bag_to_poses_file
 
 This tool can be used to convert trajectory measurements from a bag file to a pose file of any type (txt, json, ply, pcd). Topics can be of type :
-    * nav_msgs/Odometry: all messages will be combined into a pose file
-    * nav_msgs/Path: all poses from the **final message** will be combined into a pose file. We assume that the path messages are built incrementally and therefore the last Path message will contain all information. 
+
+* nav_msgs/Odometry: all messages will be combined into a pose file
+* nav_msgs/Path: all poses from the **final message** will be combined into a pose file. We assume that the path messages are built incrementally and therefore the last Path message will contain all information. 
 
 For more information on how to run the executable, run:
 
