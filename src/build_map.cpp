@@ -29,9 +29,9 @@ DEFINE_string(poses_moving_frame, "",
               "match a frame in the extrinsics. If not provided, it will use "
               "the frame from the poses file. Otherwise, it will override.");
 DEFINE_int32(format_type, 1,
-             "Format type of output. Default: 1. Options: 1, 2");
+             "Format type of pose file. Default: 1. Options: 1, 2");
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   beam_mapping::MapBuilder map_builder(
       FLAGS_bag_file, FLAGS_config_file, FLAGS_pose_file,
