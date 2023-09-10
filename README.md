@@ -70,7 +70,7 @@ The following are the types of filters that have been implemented in libbeam/bea
 This is the main executable for building maps. For help on running the exectuable, run:
 
 ```
-./path_to_build_dir/3d_map_builder_build_map --help
+./path_to_build_dir/map_builder_build_map --help
 ```
 
 All parameters can be configured in the input config json. For an example config file, see config/examples/EXAMPLE_CONFIG.json
@@ -106,7 +106,7 @@ This tool can be used to convert trajectory measurements from a bag file to a po
 For more information on how to run the executable, run:
 
 ```
-./path_to_build_dir/3d_map_builder_bag_to_poses_file --help
+./path_to_build_dir/map_builder_bag_to_poses_file --help
 ```
 
 ### path_messages_to_pose_files
@@ -116,7 +116,7 @@ This tool can be used to output all path messages to their own pose files. This 
 For more information on how to run the executable, run:
 
 ```
-./path_to_build_dir/3d_map_builder_path_messages_to_pose_files --help
+./path_to_build_dir/map_builder_path_messages_to_pose_files --help
 ```
 
 ### loop_closed_paths_to_poses
@@ -129,7 +129,7 @@ Often, SLAM runs a trajectory estimation at high rate (local mapping) and correc
 For more information on how to run the executable, run:
 
 ```
-./path_to_build_dir/3d_map_builder_loop_closed_paths_to_poses --help
+./path_to_build_dir/map_builder_loop_closed_paths_to_poses --help
 ```
 
 **Methodology:** This works by adding all poses into ordered maps, sorted by timestamp. We then iterate through each high rate pose, and when the timestamp align with, or exceeds a loop closed path, we calculate the correction T_WORLDCORRECTED_WORLDESTIMATED. Where world estimated, is the etimated world frame of the high rate poses, and world corrected is the estimated world frame of the loop closed poses. There are two options to apply these corrections:
@@ -149,7 +149,7 @@ This tool can be used to convert a pose file to another pose file of any type (t
 For more information on how to run the executable, run:
 
 ```
-./path_to_build_dir/3d_map_builder_poses_to_poses_file --help
+./path_to_build_dir/map_builder_poses_to_poses_file --help
 ```
 
 ### manual_calibration
@@ -202,7 +202,7 @@ Within the docker container, run:
 
 ```
 cd /home/user/catkin_ws
-./build/3d_map_builder/3d_map_builder_bag_to_poses_file -bag /home/user/data/sim_data.bag -output_path /home/user/data/ -topic /odometry/ground_truth -output_type JSON
+./build/3d_map_builder/map_builder_bag_to_poses_file -bag /home/user/data/sim_data.bag -output_path /home/user/data/ -topic /odometry/ground_truth -output_type JSON
 ```
 
 If your data has the trajectory in the form of a path message, use the path_messages_to_pose_files executable. If you have a set of poses that are sparse but have been corrected with loop closed, and a set of dense poses that have not, you should use to loop_closed_paths_to_poses executable.
@@ -218,7 +218,7 @@ After creating your extrinsics, and configuring your config, run the following t
 
 ```
 cd /home/user/catkin_ws
-./build/3d_map_builder/3d_map_builder_build_map -config_file /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_CONFIG.json -extrinsics /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_EXTRINSICS.json -pose_file /home/user/data/poses.json -bag_file /home/user/data/sim_data.bag -output_directory /home/user/data/
+./build/3d_map_builder/map_builder_build_map -config_file /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_CONFIG.json -extrinsics /home/user/catkin_ws/src/3d_map_builder/config/EXAMPLE_EXTRINSICS.json -pose_file /home/user/data/poses.json -bag_file /home/user/data/sim_data.bag -output_directory /home/user/data/
 ```
 
 That's it! Your maps will be output to the /home/user/data/ on your docker container, and should also appear the same location that you downloaded your bag file to on your computer.
