@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
             .matrix();
 
     // transform poses into desired frame
-    const auto& poses = pose_builder.GetPoses();
+    auto poses = pose_builder.GetPoses();
     for (auto& T_WORLD_MOVINGFRAME : poses) {
       T_WORLD_MOVINGFRAME *= T_MOVINGFRAME_DESIREDMOVINGFRAME;
     }

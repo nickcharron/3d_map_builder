@@ -82,6 +82,20 @@ target_link_libraries(${PROJECT_NAME}_loop_closed_paths_to_poses
   beam::calibration
 )
 
+add_executable(${PROJECT_NAME}_fill_in_trajectory
+  src/fill_in_trajectory.cpp
+)
+
+target_include_directories(${PROJECT_NAME}_fill_in_trajectory
+  PUBLIC
+)
+
+target_link_libraries(${PROJECT_NAME}_fill_in_trajectory
+  beam::utils
+  beam::mapping
+  beam::calibration
+)
+
 add_executable(${PROJECT_NAME}_path_messages_to_poses_files
   src/path_messages_to_pose_files.cpp
 )

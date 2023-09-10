@@ -142,6 +142,17 @@ The figure below shows the difference between interpolating the corrections or n
 
 ![Corrected High Rate Poses With Interpolation](docs/CorrectedHighRatePosesWithInterpolation.png)
 
+
+### fill_in_trajectory
+
+This is the same thing as loop_closed_paths_to_poses, except it requires two poses files instead of directly extracting from a bag. This gives more versatility as you can extract the poses any way you want, using any other tools provided here. The above is only an option if you are using two path topics from a single bag which have the same frame IDs.
+
+For more information on how to run the executable, run:
+
+```
+./path_to_build_dir/map_builder_fill_in_trajectory --help
+```
+
 ### poses_to_poses_file
 
 This tool can be used to convert a pose file to another pose file of any type (txt, json, ply, pcd). Additionally, there is the option to specify the frame in which poses are to be expressed. This is useful when comparing SLAM trajectories, as large offsets between differently assumed base_link frames can lead to incorrect comparisons.
