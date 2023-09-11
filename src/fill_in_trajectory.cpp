@@ -144,6 +144,12 @@ beam_mapping::Poses
     final_poses.AddSinglePose(T_WORLDCORR_BASELINKHR);
   }
 
+  // add metadata
+  final_poses.SetBagName(poses_lr.GetBagName());
+  final_poses.SetFixedFrame(poses_lr.GetFixedFrame());
+  final_poses.SetMovingFrame(poses_lr.GetMovingFrame());
+  final_poses.SetPoseFileDate(
+      beam::ConvertTimeToDate(std::chrono::system_clock::now()));
   return final_poses;
 }
 
