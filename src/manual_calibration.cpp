@@ -1,9 +1,10 @@
 #include <gflags/gflags.h>
 
-#include <beam_mapping/MapBuilder.h>
 #include <beam_utils/gflags.h>
 #include <beam_utils/math.h>
 #include <beam_utils/se3.h>
+
+#include <map_builder/MapBuilder.h>
 
 #include <map_builder/ManualCalibrationMsg.h>
 
@@ -44,9 +45,9 @@ DEFINE_validator(candidate_frame, &beam::gflags::ValidateCannotBeEmpty);
  * sensor_data
  * @param[in] sensor_frame sensor frame id
  */
-const beam_mapping::pose_and_scan_data_type GetPoseAndScanData(
-    beam_mapping::sensor_data_type &sensor_data,
-    const std::string &sensor_frame) {
+const beam_mapping::pose_and_scan_data_type
+    GetPoseAndScanData(beam_mapping::sensor_data_type& sensor_data,
+                       const std::string& sensor_frame) {
   if (sensor_data.find(sensor_frame) != sensor_data.end()) {
     return sensor_data[sensor_frame];
   } else {
@@ -56,7 +57,7 @@ const beam_mapping::pose_and_scan_data_type GetPoseAndScanData(
 }
 
 class ManualCalibration {
- public:
+public:
   /**
    * @brief Explicit Constructor
    *
@@ -64,15 +65,15 @@ class ManualCalibration {
    * @param[in] pose_and_scan_data_candidate scan data for candidate sensor
    */
   explicit ManualCalibration(
-      const beam_mapping::pose_and_scan_data_type &pose_and_scan_data_reference,
-      const beam_mapping::pose_and_scan_data_type &pose_and_scan_data_candidate)
+      const beam_mapping::pose_and_scan_data_type& pose_and_scan_data_reference,
+      const beam_mapping::pose_and_scan_data_type& pose_and_scan_data_candidate)
       : pose_and_scan_data_reference_(pose_and_scan_data_reference),
         pose_and_scan_data_candidate_(pose_and_scan_data_candidate),
         max_size_(pose_and_scan_data_reference.first.size()) {
     ros::Time::init();
   };
 
- private:
+private:
   /**
    * @brief Processes scans for publication
    *
@@ -81,10 +82,10 @@ class ManualCalibration {
    * @param[in] T_SENSOR_ADJUSTEDSENSOR transform from sensor to adjusted sensor
    * @param[out] cloud_msg combined point cloud for sensor over sliding window
    */
-  sensor_msgs::PointCloud2 ProcessScans(
-      const beam_mapping::pose_and_scan_data_type &scan_data,
-      const Eigen::Matrix4d &T_SENSOR_ADJUSTEDSENSOR =
-          Eigen::Matrix4d::Identity()) {
+  sensor_msgs::PointCloud2
+      ProcessScans(const beam_mapping::pose_and_scan_data_type& scan_data,
+                   const Eigen::Matrix4d& T_SENSOR_ADJUSTEDSENSOR =
+                       Eigen::Matrix4d::Identity()) {
     // transform scans into world frame over window
     PointCloud::Ptr cloud = std::make_unique<PointCloud>();
     for (size_t i = idx_start_; i < (idx_start_ + window_size_); i++) {
@@ -107,13 +108,12 @@ class ManualCalibration {
    * calibration adjustments
    */
   void AdjustedExtrinsicsCallback(
-      const map_builder::ManualCalibrationMsg &manual_calibration_msg) {
+      const map_builder::ManualCalibrationMsg& manual_calibration_msg) {
     if ((manual_calibration_msg.idx_start +
          manual_calibration_msg.window_size) > max_size_) {
-      BEAM_WARN(
-          "starting index and window size exceeds scan data size of {}. "
-          "Re-adjust values to suite.",
-          max_size_);
+      BEAM_WARN("starting index and window size exceeds scan data size of {}. "
+                "Re-adjust values to suite.",
+                max_size_);
     }
 
     if (manual_calibration_msg.publish) {
@@ -173,10 +173,10 @@ class ManualCalibration {
                     &ManualCalibration::AdjustedExtrinsicsCallback, this);
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // build map without saving to disk
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  beam_mapping::MapBuilder map_builder(
+  map_builder::MapBuilder map_builder(
       FLAGS_bag_file, FLAGS_config_file, FLAGS_pose_file,
       "dummy_output_directory", FLAGS_extrinsics, FLAGS_poses_moving_frame);
   map_builder.BuildMap(false);
@@ -189,9 +189,8 @@ int main(int argc, char *argv[]) {
       GetPoseAndScanData(sensor_data, FLAGS_candidate_frame);
 
   // node handle
-  BEAM_INFO(
-      "Manual calibration of candidate sensor with respect to reference "
-      "sensor");
+  BEAM_INFO("Manual calibration of candidate sensor with respect to reference "
+            "sensor");
   try {
     ros::init(argc, argv, "manual_calibration");
     ManualCalibration manual_calibration(pose_and_scan_data_reference,
@@ -201,9 +200,7 @@ int main(int argc, char *argv[]) {
       ros::spinOnce();
       ros_rate.sleep();
     }
-  } catch (std::exception &e) {
-    std::cerr << e.what() << std::endl;
-  }
+  } catch (std::exception& e) { std::cerr << e.what() << std::endl; }
 
   return 0;
 }

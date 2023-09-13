@@ -1,7 +1,8 @@
 #include <gflags/gflags.h>
 
-#include <beam_mapping/MapBuilder.h>
 #include <beam_utils/gflags.h>
+
+#include <map_builder/MapBuilder.h>
 
 DEFINE_string(bag_file, "",
               "Full file path to bag file containing the 3D data. ");
@@ -30,13 +31,16 @@ DEFINE_string(poses_moving_frame, "",
               "the frame from the poses file. Otherwise, it will override.");
 DEFINE_int32(format_type, 1,
              "Format type of pose file. Default: 1. Options: 1, 2");
+DEFINE_string(
+    lidar_type, "VELODYNE",
+    "Type of lidar the collected the data. Options are: VELODYNE, OUSTER");
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  beam_mapping::MapBuilder map_builder(
+  map_builder::MapBuilder map_builder(
       FLAGS_bag_file, FLAGS_config_file, FLAGS_pose_file,
       FLAGS_output_directory, FLAGS_extrinsics, FLAGS_poses_moving_frame,
-      FLAGS_format_type);
+      FLAGS_format_type, FLAGS_lidar_type);
   map_builder.BuildMap();
   return 0;
 }

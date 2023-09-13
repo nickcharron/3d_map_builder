@@ -1,0 +1,21 @@
+{
+  "intermediary_map_size": 8,
+  "min_translation": 0.01,
+  "min_rotation_deg": 5,
+  "combine_sensor_data": false,
+  "3d_sensor_data": [
+    {
+      "topic": "/vvlp/velodyne_points",
+      "frame": "vvlp_link",
+      "use_cropbox": true,
+      "cropbox_min": [-2, -10, -4],
+      "cropbox_max": [10, 10, 4]
+    }
+  ],
+  "input_filters":[
+  ],
+  "intermediary_filters": [
+  ],
+  "output_filters": [
+  ]
+}
