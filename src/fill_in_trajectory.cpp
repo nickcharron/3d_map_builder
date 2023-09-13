@@ -8,6 +8,11 @@
 
 #include <iostream>
 
+/**
+ * @brief To be conservative on the pose estimates, this class only starts
+ * filling in low rate poses with high rate poses after the first low rate pose
+ * that has high rate post before and after
+ */
 DEFINE_string(poses_high_rate, "",
               "Full path to pose file that contains the high-rate poses used "
               "to fill in the low-rate poses");
@@ -30,7 +35,8 @@ DEFINE_string(extrinsics, "",
 using namespace beam_mapping;
 
 pose_map_type ToPoseMapType(const beam_mapping::Poses& poses,
-                            const Eigen::Matrix4d& T) {
+                            const Eigen::Matrix4d& T,
+                            const ros::Time& min_time = ros::Time(0)) {
   pose_map_type pose_map;
   const auto& timestamps = poses.GetTimeStamps();
   const auto& poses_vec = poses.GetPoses();
@@ -39,6 +45,7 @@ pose_map_type ToPoseMapType(const beam_mapping::Poses& poses,
     throw std::runtime_error{"Invalid poses"};
   }
   for (int i = 0; i < poses_vec.size(); i++) {
+    if (timestamps.at(i) < min_time) { continue; }
     Eigen::Matrix4d pose = T * poses_vec.at(i);
     pose_map.emplace(timestamps.at(i).toNSec(), pose);
   }
@@ -50,17 +57,21 @@ beam_mapping::Poses
                      const beam_mapping::Poses& poses_lr,
                      const Eigen::Matrix4d& T_MovingLr_MovingHr) {
   pose_map_type high_rate_poses = ToPoseMapType(poses_hr, T_MovingLr_MovingHr);
-  pose_map_type low_rate_poses =
-      ToPoseMapType(poses_lr, Eigen::Matrix4d::Identity());
+  pose_map_type low_rate_poses = ToPoseMapType(
+      poses_lr, Eigen::Matrix4d::Identity(), poses_hr.GetTimeStamps().at(0));
 
   // iterate through HR poses and build corrections
   beam_calibration::TfTree corrections;
-  Eigen::Matrix4d T_WORLDCORR_WORLDEST;
+  Eigen::Matrix4d T_WORLDCORR_WORLDEST = Eigen::Matrix4d::Identity();
   beam_calibration::TfTree transforms_HR;
+
+  // add first HR
   auto iter_HR_prev = high_rate_poses.begin();
+
   auto iter_LR = low_rate_poses.begin();
-  for (auto iter_HR = high_rate_poses.begin(); iter_HR != high_rate_poses.end();
-       iter_HR++) {
+  // auto iter_LR = std::next(low_rate_poses.begin());
+  for (auto iter_HR = std::next(high_rate_poses.begin());
+       iter_HR != high_rate_poses.end(); iter_HR++) {
     // get time of curent HR and LR poses
     const uint64_t& t_HR = iter_HR->first;
     const uint64_t& t_LR = iter_LR->first;
@@ -127,6 +138,7 @@ beam_mapping::Poses
   for (auto iter_HR = high_rate_poses.begin(); iter_HR != high_rate_poses.end();
        iter_HR++) {
     const uint64_t& t_HR = iter_HR->first;
+    if (t_HR < low_rate_poses.begin()->first) { continue; }
     const Eigen::Matrix4d& T_WORLDEST_BASELINKHR = iter_HR->second;
 
     // calculate correction
@@ -159,6 +171,13 @@ int main(int argc, char* argv[]) {
   poses_hr.LoadFromFile(FLAGS_poses_high_rate, 1);
   beam_mapping::Poses poses_lr;
   poses_lr.LoadFromFile(FLAGS_poses_low_rate, 1);
+
+  if (poses_lr.GetPoses().empty()) {
+    throw std::runtime_error{"empty low rate poses"};
+  }
+  if (poses_hr.GetPoses().empty()) {
+    throw std::runtime_error{"empty high rate poses"};
+  }
 
   Eigen::Matrix4d T_MovingLr_MovingHr = Eigen::Matrix4d::Identity();
   if (poses_hr.GetMovingFrame() != poses_lr.GetMovingFrame()) {
