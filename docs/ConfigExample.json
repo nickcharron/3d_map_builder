@@ -4,30 +4,48 @@
   "save_directory": "/userhome/results/map_builder/",
   "extrinsics_file": "/userhome/config/calibrations/ig2/extrinsics.json",
   "moving_frame": "",
-  "fixed_frame": "",  
+  "fixed_frame": "",
   "intermediary_map_size": 8,
   "min_translation_m": 0.1,
   "min_rotation_deg": 45,
   "combine_sensor_data": true,
+  "deskew_scans": true,
+  "lidar_type": "VELODYNE",
   "3d_sensor_data": [
     {
       "topic": "/hvlp/velodyne_points",
       "frame": "hvlp_link",
       "use_cropbox": true,
       "remove_outside_points": true,
-      "cropbox_min": [-50, -50, -50],
-      "cropbox_max": [50, 50, 50]
+      "cropbox_min": [
+        -50,
+        -50,
+        -50
+      ],
+      "cropbox_max": [
+        50,
+        50,
+        50
+      ]
     },
     {
       "topic": "/vvlp/velodyne_points",
       "frame": "vvlp_link",
       "use_cropbox": true,
       "remove_outside_points": true,
-      "cropbox_min": [-2, -8, -4],
-      "cropbox_max": [10, 8, 4]
+      "cropbox_min": [
+        -2,
+        -8,
+        -4
+      ],
+      "cropbox_max": [
+        10,
+        8,
+        4
+      ]
     }
   ],
-  "input_filters":[
+  "input_filters": [
     {
       "filter_type": "DROR",
       "radius_multiplier": 3,
@@ -37,8 +55,16 @@
     },
     {
       "filter_type": "CROPBOX",
-      "min": [-0.3, -1, -1],
-      "max": [0.3, 1, 1],
+      "min": [
+        -0.3,
+        -1,
+        -1
+      ],
+      "max": [
+        0.3,
+        1,
+        1
+      ],
       "remove_outside_points": false
     }
   ],
@@ -59,7 +85,11 @@
     },
     {
       "filter_type": "VOXEL",
-      "cell_size": [0.05, 0.05, 0.05]
+      "cell_size": [
+        0.05,
+        0.05,
+        0.05
+      ]
     }
   ]
 }

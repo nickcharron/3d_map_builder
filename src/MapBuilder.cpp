@@ -23,7 +23,7 @@ MapBuilder::MapBuilder(const std::string& bag_file,
                        const std::string& output_directory,
                        const std::string& extrinsics,
                        const std::string& poses_moving_frame,
-                       int poses_format_type, const std::string& lidar_type)
+                       int poses_format_type)
     : bag_file_path_(bag_file),
       config_file_(config_file),
       pose_file_path_(pose_file),
@@ -41,36 +41,49 @@ void MapBuilder::LoadConfigFromJSON() {
     throw std::runtime_error{"Invalid json"};
   }
 
-  try {
-    intermediary_map_size_ = J["intermediary_map_size"];
-    min_translation_m_ = J["min_translation_m"];
-    min_rotation_deg_ = J["min_rotation_deg"];
-    combine_sensor_data_ = J["combine_sensor_data"];
-    for (const auto& sensor : J["3d_sensor_data"]) {
-      MapBuilder::SensorConfig sensor_config;
-      sensor_config.topic = sensor["topic"];
-      sensor_config.frame = sensor["frame"];
-      sensor_config.use_cropbox = sensor["use_cropbox"];
-      sensor_config.remove_outside_points = sensor["remove_outside_points"];
-      std::vector<float> min_ = sensor["cropbox_min"];
-      std::vector<float> max_ = sensor["cropbox_max"];
-      Eigen::Vector3f min(min_[0], min_[1], min_[2]);
-      Eigen::Vector3f max(max_[0], max_[1], max_[2]);
-      sensor_config.cropbox_min = min;
-      sensor_config.cropbox_max = max;
-      sensors_.push_back(sensor_config);
-    }
-    input_filters_ = beam_filtering::LoadFilterParamsVector(J["input_filters"]);
-    intermediary_filters_ =
-        beam_filtering::LoadFilterParamsVector(J["intermediary_filters"]);
-    output_filters_ =
-        beam_filtering::LoadFilterParamsVector(J["output_filters"]);
-  } catch (const nlohmann::json::exception& e) {
-    BEAM_CRITICAL("Unable to load json, one or more missing or invalid params. "
-                  "Reason: {}",
-                  e.what());
+  if (!J.contains("intermediary_map_size") ||
+      !J.contains("min_translation_m") || !J.contains("min_rotation_deg") ||
+      !J.contains("combine_sensor_data") || !J.contains("3d_sensor_data") ||
+      !J.contains("input_filters") || !J.contains("intermediary_filters") ||
+      !J.contains("output_filters") || !J.contains("deskew_scans") ||
+      !J.contains("lidar_type")) {
+    BEAM_CRITICAL(
+        "Unable to load json, one or more missing or invalid params.");
     throw std::runtime_error{"Invalid json"};
   }
+
+  intermediary_map_size_ = J["intermediary_map_size"];
+  min_translation_m_ = J["min_translation_m"];
+  min_rotation_deg_ = J["min_rotation_deg"];
+  combine_sensor_data_ = J["combine_sensor_data"];
+  deskew_scans_ = J["deskew_scans"];
+  lidar_type_ = J["lidar_type"];
+  for (const auto& sensor : J["3d_sensor_data"]) {
+    if (!sensor.contains("topic") || !sensor.contains("frame") ||
+        !sensor.contains("use_cropbox") ||
+        !sensor.contains("remove_outside_points") ||
+        !sensor.contains("cropbox_min") || !sensor.contains("cropbox_max")) {
+      BEAM_CRITICAL(
+          "Unable to load json, one or more missing or invalid params.");
+      throw std::runtime_error{"Invalid json"};
+    }
+    MapBuilder::SensorConfig sensor_config;
+    sensor_config.topic = sensor["topic"];
+    sensor_config.frame = sensor["frame"];
+    sensor_config.use_cropbox = sensor["use_cropbox"];
+    sensor_config.remove_outside_points = sensor["remove_outside_points"];
+    std::vector<float> min_ = sensor["cropbox_min"];
+    std::vector<float> max_ = sensor["cropbox_max"];
+    Eigen::Vector3f min(min_[0], min_[1], min_[2]);
+    Eigen::Vector3f max(max_[0], max_[1], max_[2]);
+    sensor_config.cropbox_min = min;
+    sensor_config.cropbox_max = max;
+    sensors_.push_back(sensor_config);
+  }
+  input_filters_ = beam_filtering::LoadFilterParamsVector(J["input_filters"]);
+  intermediary_filters_ =
+      beam_filtering::LoadFilterParamsVector(J["intermediary_filters"]);
+  output_filters_ = beam_filtering::LoadFilterParamsVector(J["output_filters"]);
 }
 
 void MapBuilder::LoadTrajectory() {
@@ -103,8 +116,8 @@ void MapBuilder::LoadTrajectory() {
   extrinsics_.LoadJSON(extrinsics_file_);
 
   for (size_t k = 0; k < slam_poses_.GetTimeStamps().size(); k++) {
-    Eigen::Affine3d T_MAP_MOVINGFRAME(slam_poses_.GetPoses()[k]);
-    trajectory_.AddTransform(T_MAP_MOVINGFRAME, map_frame_, poses_moving_frame_,
+    Eigen::Affine3d T_Map_MovingFrame(slam_poses_.GetPoses()[k]);
+    trajectory_.AddTransform(T_Map_MovingFrame, map_frame_, poses_moving_frame_,
                              slam_poses_.GetTimeStamps()[k]);
   }
 }
@@ -130,6 +143,7 @@ void MapBuilder::ProcessPointCloudMsg(rosbag::View::iterator& iter,
       (scan_time > slam_poses_.GetTimeStamps().back())) {
     return;
   }
+
   Eigen::Affine3d scan_pose_current =
       trajectory_.GetTransformEigen(map_frame_, poses_moving_frame_, scan_time);
 
@@ -139,12 +153,26 @@ void MapBuilder::ProcessPointCloudMsg(rosbag::View::iterator& iter,
     return;
   }
 
-  pcl::PCLPointCloud2::Ptr pcl_pc2_tmp =
-      std::make_shared<pcl::PCLPointCloud2>();
-  PointCloud cloud_tmp;
-  beam::pcl_conversions::toPCL(*sensor_msg, *pcl_pc2_tmp);
-  pcl::fromPCLPointCloud2(*pcl_pc2_tmp, cloud_tmp);
-  PointCloud cloud_cropped = CropCloudRaw(cloud_tmp, sensor_number);
+  PointCloud cloud_input;
+  if (!deskew_scans_) {
+    pcl::PCLPointCloud2 cloud2;
+    beam::pcl_conversions::toPCL(*sensor_msg, cloud2);
+    pcl::fromPCLPointCloud2(cloud2, cloud_input);
+  } else if (lidar_type_ == "VELODYNE") {
+    pcl::PointCloud<PointXYZIRT> cloud;
+    beam::ROSToPCL(cloud, *sensor_msg);
+    cloud_input = DeskewPointCloud(cloud, scan_time, sensor_number);
+  } else if (lidar_type_ == "OUSTER") {
+    pcl::PointCloud<PointXYZITRRNR> cloud;
+    beam::ROSToPCL(cloud, *sensor_msg);
+    cloud_input = DeskewPointCloud(cloud, scan_time, sensor_number);
+  } else {
+    BEAM_ERROR("Invalid input lidar type: {}, options: VELODYNE, OUSTER",
+               lidar_type_);
+    throw std::runtime_error{"invalid input lidar type"};
+  }
+
+  PointCloud cloud_cropped = CropCloudRaw(cloud_input, sensor_number);
   PointCloud cloud_filtered = beam_filtering::FilterPointCloud<pcl::PointXYZ>(
       cloud_cropped, input_filters_);
   scans_.push_back(std::make_shared<PointCloud>(cloud_filtered));
@@ -184,13 +212,13 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
   std::string sensor_frame = sensors_[sensor_number].frame;
   PointCloud::Ptr scan_aggregate = std::make_shared<PointCloud>();
   PointCloud::Ptr scan_intermediary = std::make_shared<PointCloud>();
-  Eigen::Matrix4d T_MOVING_LIDAR =
+  Eigen::Matrix4d T_Moving_Lidar =
       extrinsics_.GetTransformEigen(moving_frame, sensor_frame).matrix();
 
   // iterate through all scans
   int intermediary_size = 0;
-  Eigen::Matrix4d T_FIXED_INT = Eigen::Matrix4d::Identity();
-  Eigen::Matrix4d T_INT_LIDAR = Eigen::Matrix4d::Identity();
+  Eigen::Matrix4d T_Fixed_Int = Eigen::Matrix4d::Identity();
+  Eigen::Matrix4d T_Int_Lidar = Eigen::Matrix4d::Identity();
 
   const std::vector<Eigen::Matrix4d, beam::AlignMat4d>& poses =
       interpolated_poses_.GetPoses();
@@ -199,15 +227,15 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
     intermediary_size++;
 
     // get the transforms we will need:
-    Eigen::Matrix4d T_FIXED_MOVING = poses[k];
-    Eigen::Matrix4d T_FIXED_LIDAR = T_FIXED_MOVING * T_MOVING_LIDAR;
-    scan_poses.push_back(T_FIXED_LIDAR);
-    if (intermediary_size == 1) { T_FIXED_INT = T_FIXED_LIDAR; }
-    T_INT_LIDAR = beam::InvertTransform(T_FIXED_INT) * T_FIXED_LIDAR;
+    Eigen::Matrix4d T_Fixed_Moving = poses[k];
+    Eigen::Matrix4d T_Fixed_Lidar = T_Fixed_Moving * T_Moving_Lidar;
+    scan_poses.push_back(T_Fixed_Lidar);
+    if (intermediary_size == 1) { T_Fixed_Int = T_Fixed_Lidar; }
+    T_Int_Lidar = beam::InvertTransform(T_Fixed_Int) * T_Fixed_Lidar;
 
     PointCloud::Ptr scan_intermediate_frame = std::make_shared<PointCloud>();
     PointCloud::Ptr intermediary_transformed = std::make_shared<PointCloud>();
-    pcl::transformPointCloud(*scans_[k], *scan_intermediate_frame, T_INT_LIDAR);
+    pcl::transformPointCloud(*scans_[k], *scan_intermediate_frame, T_Int_Lidar);
     *scan_intermediary += *scan_intermediate_frame;
 
     if (intermediary_size == intermediary_map_size_ || k == scans_.size()) {
@@ -215,7 +243,7 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
           beam_filtering::FilterPointCloud<pcl::PointXYZ>(
               *scan_intermediary, intermediary_filters_);
       pcl::transformPointCloud(*scan_intermediate_frame,
-                               *intermediary_transformed, T_FIXED_INT);
+                               *intermediary_transformed, T_Fixed_Int);
       *scan_aggregate += *intermediary_transformed;
       scan_intermediary->clear();
       intermediary_size = 0;
@@ -267,8 +295,8 @@ void MapBuilder::GeneratePoses() {
   // generate trajectory of moving frame
   PointCloudCol fixed_frame_traj;
   for (size_t k = 0; k < poses.size(); k++) {
-    const Eigen::Matrix4d& T_MAP_FIXEDFRAME = poses.at(k);
-    beam::MergeFrameToCloud(fixed_frame_traj, frame, T_MAP_FIXEDFRAME);
+    const Eigen::Matrix4d& T_Map_FixedFrame = poses.at(k);
+    beam::MergeFrameToCloud(fixed_frame_traj, frame, T_Map_FixedFrame);
   }
 
   // save
@@ -284,13 +312,13 @@ void MapBuilder::GeneratePoses() {
   // generate trajectory of each sensor frame
   for (size_t i = 0; i < sensors_.size(); i++) {
     std::string scan_frame = sensors_[i].frame;
-    Eigen::Matrix4d T_MOVING_LIDAR =
+    Eigen::Matrix4d T_Moving_Lidar =
         extrinsics_.GetTransformEigen(poses_moving_frame_, scan_frame).matrix();
     PointCloudCol sensor_frame_traj;
     for (size_t k = 0; k < poses.size(); k++) {
-      const Eigen::Matrix4d& T_FIXED_MOVING = poses.at(k);
-      Eigen::Matrix4d T_FIXED_LIDAR = T_FIXED_MOVING * T_MOVING_LIDAR;
-      beam::MergeFrameToCloud(sensor_frame_traj, frame, T_FIXED_LIDAR);
+      const Eigen::Matrix4d& T_Fixed_Moving = poses.at(k);
+      Eigen::Matrix4d T_Fixed_Lidar = T_Fixed_Moving * T_Moving_Lidar;
+      beam::MergeFrameToCloud(sensor_frame_traj, frame, T_Fixed_Lidar);
     }
 
     // save
@@ -324,6 +352,83 @@ void MapBuilder::BuildMap(bool save_output) {
     GeneratePoses();
     SaveMaps();
   };
+}
+
+PointCloud MapBuilder::DeskewPointCloud(
+    const pcl::PointCloud<PointXYZIRT>& skewed_cloud,
+    const ros::Time& scan_time, uint8_t sensor_number) const {
+  std::string sensor_frame = sensors_[sensor_number].frame;
+  Eigen::Affine3d T_Moving_Lidar =
+      extrinsics_.GetTransformEigen(poses_moving_frame_, sensor_frame);
+  Eigen::Affine3d T_Map_Moving =
+      trajectory_.GetTransformEigen(map_frame_, poses_moving_frame_, scan_time);
+  Eigen::Affine3d T_Lidar0_Map = (T_Map_Moving * T_Moving_Lidar).inverse();
+
+  PointCloud cloud_deskewed;
+  int skipped = 0;
+  for (const auto& p : skewed_cloud) {
+    ros::Time pt = scan_time + ros::Duration(p.time);
+    if (pt < trajectory_.GetStartTime() || pt > trajectory_.GetEndTime()) {
+      skipped++;
+      continue;
+    }
+    Eigen::Affine3d T_Map_MovingN =
+        trajectory_.GetTransformEigen(map_frame_, poses_moving_frame_, pt);
+
+    Eigen::Affine3d T_Lidar0_LidarN =
+        T_Lidar0_Map * T_Map_MovingN * T_Moving_Lidar;
+    PointXYZIRT p_deskewed =
+        pcl::transformPoint<PointXYZIRT>(p, T_Lidar0_LidarN.cast<float>());
+    pcl::PointXYZ p_xyz;
+    p_xyz.x = p_deskewed.x;
+    p_xyz.y = p_deskewed.y;
+    p_xyz.z = p_deskewed.z;
+    cloud_deskewed.push_back(p_xyz);
+  }
+  if (skipped != 0) {
+    BEAM_WARN(
+        "Skipped deskewing {} points as they were out of the trajectory range",
+        skipped);
+  }
+  return cloud_deskewed;
+}
+
+PointCloud MapBuilder::DeskewPointCloud(
+    const pcl::PointCloud<PointXYZITRRNR>& skewed_cloud,
+    const ros::Time& scan_time, uint8_t sensor_number) const {
+  std::string sensor_frame = sensors_[sensor_number].frame;
+  Eigen::Affine3d T_Moving_Lidar =
+      extrinsics_.GetTransformEigen(poses_moving_frame_, sensor_frame);
+  Eigen::Affine3d T_Map_Moving =
+      trajectory_.GetTransformEigen(map_frame_, poses_moving_frame_, scan_time);
+  Eigen::Affine3d T_Lidar0_Map = (T_Map_Moving * T_Moving_Lidar).inverse();
+
+  PointCloud cloud_deskewed;
+  int skipped = 0;
+  for (const auto& p : skewed_cloud) {
+    ros::Time pt = scan_time + ros::Duration(p.time);
+    if (pt < trajectory_.GetStartTime() || pt > trajectory_.GetEndTime()) {
+      skipped++;
+      continue;
+    }
+    Eigen::Affine3d T_Map_MovingN =
+        trajectory_.GetTransformEigen(map_frame_, poses_moving_frame_, pt);
+    Eigen::Affine3d T_Lidar0_LidarN =
+        T_Lidar0_Map * T_Map_MovingN * T_Moving_Lidar;
+    PointXYZITRRNR p_deskewed =
+        pcl::transformPoint<PointXYZITRRNR>(p, T_Lidar0_LidarN.cast<float>());
+    pcl::PointXYZ p_xyz;
+    p_xyz.x = p_deskewed.x;
+    p_xyz.y = p_deskewed.y;
+    p_xyz.z = p_deskewed.z;
+    cloud_deskewed.push_back(p_xyz);
+  }
+  if (skipped != 0) {
+    BEAM_WARN(
+        "Skipped deskewing {} points as they were out of the trajectory range",
+        skipped);
+  }
+  return cloud_deskewed;
 }
 
 } // namespace map_builder

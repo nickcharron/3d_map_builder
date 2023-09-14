@@ -48,8 +48,7 @@ public:
              const std::string& pose_file, const std::string& output_directory,
              const std::string& extrinsics,
              const std::string& poses_moving_frame = "",
-             int poses_format_type = beam_mapping::format_type::Type1,
-             const std::string& lidar_type = "VELODYNE");
+             int poses_format_type = beam_mapping::format_type::Type1);
 
   /**
    * @brief delete default constructor
@@ -125,6 +124,14 @@ private:
    */
   void SaveMaps();
 
+  PointCloud DeskewPointCloud(const pcl::PointCloud<PointXYZIRT>& skewed_cloud,
+                              const ros::Time& scan_time,
+                              uint8_t sensor_number) const;
+
+  PointCloud
+      DeskewPointCloud(const pcl::PointCloud<PointXYZITRRNR>& skewed_cloud,
+                       const ros::Time& scan_time, uint8_t sensor_number) const;
+
   // from constructor
   std::string bag_file_path_;
   std::string config_file_;
@@ -139,6 +146,8 @@ private:
   double min_translation_m_;
   double min_rotation_deg_;
   bool combine_sensor_data_;
+  bool deskew_scans_;
+  std::string lidar_type_;
   std::vector<SensorConfig> sensors_;
   std::vector<beam_filtering::FilterParamsType> input_filters_;
   std::vector<beam_filtering::FilterParamsType> intermediary_filters_;

@@ -3,6 +3,8 @@
     "fixed_frame": "odom",
     "moving_frame": "hvlp_link",
     "pose_file_date": "2019_7_8_17_43_5",
+    "deskew_scans": true,
+    "lidar_type": "VELODYNE",
     "poses": [
         {
             "time_stamp_nsec": 0,

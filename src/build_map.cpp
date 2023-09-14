@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
   map_builder::MapBuilder map_builder(
       FLAGS_bag_file, FLAGS_config_file, FLAGS_pose_file,
       FLAGS_output_directory, FLAGS_extrinsics, FLAGS_poses_moving_frame,
-      FLAGS_format_type, FLAGS_lidar_type);
+      FLAGS_format_type);
   map_builder.BuildMap();
   return 0;
 }

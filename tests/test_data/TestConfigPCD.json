@@ -3,26 +3,42 @@
   "min_translation_m": 0.01,
   "min_rotation_deg": 5,
   "combine_sensor_data": false,
+  "deskew_scans": true,
+  "lidar_type": "VELODYNE",
   "3d_sensor_data": [
     {
       "topic": "/lvi_sam/lidar/deskew/cloud_deskewed",
       "frame": "base_link",
       "use_cropbox": true,
       "remove_outside_points": true,
-      "cropbox_min": [-50, -50, -50],
-      "cropbox_max": [50, 50, 50]
+      "cropbox_min": [
+        -50,
+        -50,
+        -50
+      ],
+      "cropbox_max": [
+        50,
+        50,
+        50
+      ]
     }
   ],
-  "input_filters":[
+  "input_filters": [
     {
       "filter_type": "CROPBOX",
-      "min": [-0.6, -0.5, -0.5],
-      "max": [0.6, 0.5, 0.5],
+      "min": [
+        -0.6,
+        -0.5,
+        -0.5
+      ],
+      "max": [
+        0.6,
+        0.5,
+        0.5
+      ],
       "remove_outside_points": false
     }
   ],
-  "intermediary_filters": [
-  ],
-  "output_filters": [
-  ]
+  "intermediary_filters": [],
+  "output_filters": []
 }
