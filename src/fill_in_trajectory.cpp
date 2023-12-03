@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include <gflags/gflags.h>
 
 #include <beam_calibration/TfTree.h>
@@ -5,8 +7,6 @@
 #include <beam_mapping/Utils.h>
 #include <beam_utils/gflags.h>
 #include <beam_utils/se3.h>
-
-#include <iostream>
 
 /**
  * @brief To be conservative on the pose estimates, this class only starts
@@ -31,6 +31,9 @@ DEFINE_string(
 DEFINE_string(extrinsics, "",
               "Full file path to extrinsics json config file. This is only "
               "needed if the frames of your poses files are different.");
+DEFINE_bool(extrapolate_low_rate, false,
+            "Set to true to use the high rate poses to extrapolate outside of "
+            "the low rate poses");
 
 using namespace beam_mapping;
 
@@ -69,7 +72,6 @@ beam_mapping::Poses
   auto iter_HR_prev = high_rate_poses.begin();
 
   auto iter_LR = low_rate_poses.begin();
-  // auto iter_LR = std::next(low_rate_poses.begin());
   for (auto iter_HR = std::next(high_rate_poses.begin());
        iter_HR != high_rate_poses.end(); iter_HR++) {
     // get time of curent HR and LR poses
@@ -137,6 +139,12 @@ beam_mapping::Poses
   beam_mapping::Poses final_poses;
   for (auto iter_HR = high_rate_poses.begin(); iter_HR != high_rate_poses.end();
        iter_HR++) {
+    if (!FLAGS_extrapolate_low_rate) {
+      if (iter_HR->first < low_rate_poses.begin()->first ||
+          iter_HR->first > low_rate_poses.rbegin()->first) {
+        continue;
+      }
+    }
     const uint64_t& t_HR = iter_HR->first;
     if (t_HR < low_rate_poses.begin()->first) { continue; }
     const Eigen::Matrix4d& T_WORLDEST_BASELINKHR = iter_HR->second;
