@@ -2,7 +2,8 @@
 
 #include <beam_utils/gflags.h>
 
-#include <map_builder/MapBuilder.h>
+#include <map_builder/MapBuilderTest.h>
+// #include <map_builder/MapBuilder.h>
 
 DEFINE_string(bag_file, "",
               "Full file path to bag file containing the 3D data. ");

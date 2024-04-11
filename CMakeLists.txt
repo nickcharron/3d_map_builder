@@ -38,7 +38,8 @@ catkin_package(
 ## Declare a C++ library
 add_library(
   ${PROJECT_NAME}
-  src/MapBuilder.cpp
+  # src/MapBuilder.cpp
+  src/MapBuilderTest.cpp
 )
 target_include_directories(${PROJECT_NAME}
   PUBLIC
