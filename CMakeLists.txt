@@ -13,6 +13,8 @@ find_package(
   calibration
 )
 
+find_package(octomap REQUIRED)
+
 find_package(
   catkin REQUIRED 
   COMPONENTS
@@ -43,12 +45,14 @@ add_library(
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     include
+    ${OCTOMAP_INCLUDE_DIRS}
 )
 target_link_libraries(
   ${PROJECT_NAME}
     beam::utils
     beam::mapping
     beam::calibration
+    ${OCTOMAP_LIBRARIES}
 )
 
 ################ Executables ###################

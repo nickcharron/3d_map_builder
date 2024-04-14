@@ -12,6 +12,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>libbeam</build_depend>
   <build_depend>message_generation</build_depend>
+  <build_depend>octomap</build_depend>
 
   <depend>boost</depend>
   <depend>eigen</depend>
@@ -21,6 +22,7 @@
   <depend>rosbag</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
+
 
   <exec_depend>message_runtime</exec_depend>
 </package>

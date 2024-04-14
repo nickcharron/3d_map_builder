@@ -1,5 +1,6 @@
 #pragma once
 
+#include <octomap/OcTree.h>
 #include <pcl/common/transforms.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -147,6 +148,9 @@ private:
   double min_rotation_deg_;
   bool combine_sensor_data_;
   bool deskew_scans_;
+  bool octomap_run_filter_;
+  double octomap_resolution_;
+  double octomap_probability_threshold_;
   std::string lidar_type_;
   std::vector<SensorConfig> sensors_;
   std::vector<beam_filtering::FilterParamsType> input_filters_;
@@ -166,6 +170,7 @@ private:
   beam_mapping::sensor_data_type sensor_data_;
   std::string dateandtime_{""};
   bool prefix_with_date_{false};
+  std::unique_ptr<octomap::OcTree> octomap_;
 };
 
 /** @} group mapping */

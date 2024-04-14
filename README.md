@@ -18,12 +18,13 @@ Libeam depends on the following:
 * [PCL 1.11.1 or greater](https://github.com/PointCloudLibrary/pcl)
 * [gflags](https://github.com/gflags/gflags)
 * [nlohmann json](https://github.com/nlohmann/json)
+* [octomap](https://github.com/OctoMap/octomap)
 
-For more information on libbeam and it's dependencies, see the [docs](https://github.com/BEAMRobotics/libbeam). Note that we do not need all modules of libbeam for 3d_map_builder, therefore we also don't need all dependences (i.e., ceres and opencv4)
+For more information on libbeam and it's dependencies, see the [docs](https://github.com/BEAMRobotics/libbeam). Note that we do not need all modules of libbeam for 3d_map_builder, therefore we also don't need all dependencies (i.e., ceres and opencv4)
 
 ## Install
 
-For ease of use, we provide an install script that has been tested on Ubuntu18. If you would like the option of not installing all required dependencies to your system (could avoid version conflicts), we'd recommend cloning to a new catkin workspace.
+For ease of use, we provide an install script that has been tested on Ubuntu20. If you would like the option of not installing all required dependencies to your system (could avoid version conflicts), we'd recommend cloning to a new catkin workspace.
 
 ```
 git clone https://github.com/nickcharron/3d_map_builder.git
@@ -32,6 +33,8 @@ bash scripts/install.bash
 ```
 
 This script clones libbeam and runs the libbeam install script with specific params (this only builds required libbeam modules). It then builds libbeam and 3d_map_builder. The libbeam install script install all libbeam dependencies. If you have any issues, we recommend you go through the install scripts and enter the commands manually.
+
+IMPORTANT NOTE: octomap is a recent addition which is not integrated into the install scripts/docker. Please install using their instructions, or clone both the map builder and octomap in the same catkin workspace
 
 ### Docker
 
@@ -54,7 +57,7 @@ This figure illustrates the methodology used to build maps. First, extrinsic cal
 
 Our Map Builder allows any number of filters to be applied to data at three different stages in the pipeline:
 1. **input_filters**: filters are applied to the raw scans
-2. **intermediate_filters**: individual scans are aggregated together into submaps of size equal to the "intermediary_map_size" parameter and then the filter is pplied to that intermediate map. This is useful if you want to use noise removal filters that only work with a minimum point cloud density 
+2. **intermediate_filters**: individual scans are aggregated together into submaps of size equal to the "intermediary_map_size" parameter and then the filter is applied to that intermediate map. This is useful if you want to use noise removal filters that only work with a minimum point cloud density 
 3. **output_filters**: these filters are applied once at the end of the mapping once the maps have been generated 
 
 The following are the types of filters that have been implemented in libbeam/beam_filtering and can be called by the map builder:
@@ -67,7 +70,7 @@ The following are the types of filters that have been implemented in libbeam/bea
 
 ### build_map
 
-This is the main executable for building maps. For help on running the exectuable, run:
+This is the main executable for building maps. For help on running the executable, run:
 
 ```
 ./path_to_build_dir/map_builder_build_map --help
@@ -81,7 +84,7 @@ All parameters can be configured in the input config json. For an example config
     * Pose file: the pose file should contain all trajectory information. We have multiple pose file data formats including json, ply, pcd, and txt. For example formats, see: libbeam/beam_mapping/tests/test_data/PosesTests/. You can create these file formats using the bag_to_poses_file executable which convert topics from a bag to a pose file, or the poses_to_poses_file executable which converts a pose file to another pose file.
 
 **Config Params:**
-* **intermediary_map_size**: numer of scans to aggregate into an intermediary map before applying intermediary filters
+* **intermediary_map_size**: number of scans to aggregate into an intermediary map before applying intermediary filters
 * **min_translation_m**: minimum translation in meters to take a new scan for the map
 * **min_rotation_deg**: minimum rotation in degrees to take a new scan for the map (note that we use an or statement between this and min translation to determine if we keep a scan)
 * **combine_sensor_data**: set to true if you want to create a map with all sensor data combined (if you have multiple sensors)
@@ -132,7 +135,7 @@ For more information on how to run the executable, run:
 ./path_to_build_dir/map_builder_loop_closed_paths_to_poses --help
 ```
 
-**Methodology:** This works by adding all poses into ordered maps, sorted by timestamp. We then iterate through each high rate pose, and when the timestamp align with, or exceeds a loop closed path, we calculate the correction T_WORLDCORRECTED_WORLDESTIMATED. Where world estimated, is the etimated world frame of the high rate poses, and world corrected is the estimated world frame of the loop closed poses. There are two options to apply these corrections:
+**Methodology:** This works by adding all poses into ordered maps, sorted by timestamp. We then iterate through each high rate pose, and when the timestamp align with, or exceeds a loop closed path, we calculate the correction T_WORLDCORRECTED_WORLDESTIMATED. Where world estimated, is the estimated world frame of the high rate poses, and world corrected is the estimated world frame of the loop closed poses. There are two options to apply these corrections:
 1. we apply the same correction to all high rate poses between loop closed poses. This generally gives a discontinuous trajectory, but may be more precise because it does the least amount of interpolation
 2. for each high rate pose, we interpolate a correction and apply that correction to the high rate pose. This provides a more continuous trajectory estimate, and this result should be similar to the result of included all high rate poses in the pose-graph optimization used during loop closure.
 

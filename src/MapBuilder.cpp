@@ -41,17 +41,12 @@ void MapBuilder::LoadConfigFromJSON() {
     throw std::runtime_error{"Invalid json"};
   }
 
-  if (!J.contains("intermediary_map_size") ||
-      !J.contains("min_translation_m") || !J.contains("min_rotation_deg") ||
-      !J.contains("combine_sensor_data") || !J.contains("3d_sensor_data") ||
-      !J.contains("input_filters") || !J.contains("intermediary_filters") ||
-      !J.contains("output_filters") || !J.contains("deskew_scans") ||
-      !J.contains("lidar_type")) {
-    BEAM_CRITICAL(
-        "Unable to load json, one or more missing or invalid params.");
-    throw std::runtime_error{"Invalid json"};
-  }
-
+  beam::ValidateJsonKeysOrThrow({"intermediary_map_size", "min_translation_m",
+                                 "combine_sensor_data", "input_filters",
+                                 "output_filters", "lidar_type", "octomap",
+                                 "min_rotation_deg", "3d_sensor_data",
+                                 "intermediary_filters", "deskew_scans"},
+                                J);
   intermediary_map_size_ = J["intermediary_map_size"];
   min_translation_m_ = J["min_translation_m"];
   min_rotation_deg_ = J["min_rotation_deg"];
@@ -84,6 +79,21 @@ void MapBuilder::LoadConfigFromJSON() {
   intermediary_filters_ =
       beam_filtering::LoadFilterParamsVector(J["intermediary_filters"]);
   output_filters_ = beam_filtering::LoadFilterParamsVector(J["output_filters"]);
+
+  // octomap config
+  nlohmann::json J_octomap = J["octomap"];
+  beam::ValidateJsonKeysOrThrow(
+      {"run_octomap_filter", "resolution", "probability_threshold"}, J_octomap);
+  octomap_run_filter_ = J_octomap["run_octomap_filter"];
+  octomap_resolution_ = J_octomap["resolution"];
+  octomap_probability_threshold_ = J_octomap["probability_threshold"];
+  if (octomap_probability_threshold_ < 0 ||
+      octomap_probability_threshold_ > 1) {
+    throw std::invalid_argument{"Invalid probability_threshold argument."};
+  }
+  if (octomap_resolution_ < 0.001 || octomap_resolution_ > 1) {
+    throw std::invalid_argument{"Invalid octomap_resolution_ argument."};
+  }
 }
 
 void MapBuilder::LoadTrajectory() {
@@ -229,13 +239,30 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
     // get the transforms we will need:
     Eigen::Matrix4d T_Fixed_Moving = poses[k];
     Eigen::Matrix4d T_Fixed_Lidar = T_Fixed_Moving * T_Moving_Lidar;
+    const auto& scan_in_lidar = *scans_[k];
+    // build octomap
+    if (octomap_run_filter_) {
+      octomap::Pointcloud octo_pc;
+      for (int i = 0; i < scan_in_lidar.size(); i++) {
+        Eigen::Vector4d p_in_scan(scan_in_lidar.points.at(i).x,
+                                  scan_in_lidar.points.at(i).y,
+                                  scan_in_lidar.points.at(i).z, 1);
+        Eigen::Vector4d p_in_fixed = T_Fixed_Lidar * p_in_scan;
+        octo_pc.push_back(p_in_fixed[0], p_in_fixed[1], p_in_fixed[2]);
+      }
+      octomap::point3d sensor_origin(T_Fixed_Lidar(0, 3), T_Fixed_Lidar(1, 3),
+                                     T_Fixed_Lidar(2, 3));
+      octomap_->insertPointCloud(octo_pc, sensor_origin);
+    }
+
     scan_poses.push_back(T_Fixed_Lidar);
     if (intermediary_size == 1) { T_Fixed_Int = T_Fixed_Lidar; }
     T_Int_Lidar = beam::InvertTransform(T_Fixed_Int) * T_Fixed_Lidar;
 
     PointCloud::Ptr scan_intermediate_frame = std::make_shared<PointCloud>();
     PointCloud::Ptr intermediary_transformed = std::make_shared<PointCloud>();
-    pcl::transformPointCloud(*scans_[k], *scan_intermediate_frame, T_Int_Lidar);
+    pcl::transformPointCloud(scan_in_lidar, *scan_intermediate_frame,
+                             T_Int_Lidar);
     *scan_intermediary += *scan_intermediate_frame;
 
     if (intermediary_size == intermediary_map_size_ || k == scans_.size()) {
@@ -249,8 +276,30 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
       intermediary_size = 0;
     }
   }
-  PointCloud new_map = beam_filtering::FilterPointCloud<pcl::PointXYZ>(
-      *scan_aggregate, output_filters_);
+
+  // build octomap
+  PointCloud new_map;
+  if (octomap_run_filter_) {
+    PointCloud map_filtered;
+    BEAM_INFO("Running octomap filter");
+    for (int i = 0; i < scan_aggregate->size(); i++) {
+      auto p = scan_aggregate->at(i);
+      octomap::point3d p_octo(p.x, p.y, p.z);
+      auto node = octomap_->search(p_octo);
+      if (node != NULL &&
+          node->getOccupancy() >= octomap_probability_threshold_) {
+        map_filtered.push_back(p);
+      }
+    }
+    BEAM_INFO("Filtered {} points",
+              scan_aggregate->size() - map_filtered.size());
+    new_map = beam_filtering::FilterPointCloud<pcl::PointXYZ>(map_filtered,
+                                                              output_filters_);
+  } else {
+    new_map = beam_filtering::FilterPointCloud<pcl::PointXYZ>(*scan_aggregate,
+                                                              output_filters_);
+  }
+
   maps_.push_back(std::make_shared<PointCloud>(new_map));
   sensor_data_[sensor_frame] = std::make_pair(scan_poses, scans_);
 }
@@ -300,7 +349,9 @@ void MapBuilder::GeneratePoses() {
   }
 
   // save
-  std::string save_path = save_dir_ + dateandtime_ + "/moving_frame_poses.pcd";
+  std::string save_path =
+      beam::CombinePaths(save_dir_ + dateandtime_, "moving_frame_poses.pcd");
+
   BEAM_INFO("Saving trajetory cloud of moving frame to: {}", save_path);
   std::string error_message;
   if (!beam::SavePointCloud<pcl::PointXYZRGB>(
@@ -322,8 +373,9 @@ void MapBuilder::GeneratePoses() {
     }
 
     // save
-    save_path = save_dir_ + dateandtime_ + "/sensor_frame_" +
-                std::to_string(i) + "_poses.pcd";
+    save_path =
+        beam::CombinePaths(save_dir_ + dateandtime_,
+                           "sensor_frame_" + std::to_string(i) + "_poses.pcd");
     BEAM_INFO("Saving trajetory cloud of sensor frame to: {}", save_path);
     std::string error_message;
     if (!beam::SavePointCloud<pcl::PointXYZRGB>(
@@ -337,10 +389,14 @@ void MapBuilder::GeneratePoses() {
 void MapBuilder::BuildMap(bool save_output) {
   if (prefix_with_date_) {
     dateandtime_ = beam::ConvertTimeToDate(std::chrono::system_clock::now());
-    boost::filesystem::create_directory(save_dir_ + dateandtime_ + "/");
+    boost::filesystem::create_directory(save_dir_ + dateandtime_);
   }
 
   LoadTrajectory();
+  if (octomap_run_filter_) {
+    octomap_ = std::make_unique<octomap::OcTree>(octomap_resolution_);
+  }
+
   for (uint8_t i = 0; i < sensors_.size(); i++) {
     scan_pose_last_ = Eigen::Matrix4d::Identity();
     interpolated_poses_.Clear();
