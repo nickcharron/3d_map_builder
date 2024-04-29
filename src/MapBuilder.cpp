@@ -83,7 +83,9 @@ void MapBuilder::LoadConfigFromJSON() {
   // octomap config
   nlohmann::json J_octomap = J["octomap"];
   beam::ValidateJsonKeysOrThrow(
-      {"run_octomap_filter", "resolution", "probability_threshold"}, J_octomap);
+      {"run_octomap_filter", "resolution", "probability_threshold",
+       "estimate_lidar_non_returns", "non_return_raytrace_depth"},
+      J_octomap);
   octomap_run_filter_ = J_octomap["run_octomap_filter"];
   octomap_resolution_ = J_octomap["resolution"];
   octomap_probability_threshold_ = J_octomap["probability_threshold"];
@@ -94,6 +96,9 @@ void MapBuilder::LoadConfigFromJSON() {
   if (octomap_resolution_ < 0.001 || octomap_resolution_ > 1) {
     throw std::invalid_argument{"Invalid octomap_resolution_ argument."};
   }
+  octomap_estimate_lidar_non_returns_ = J_octomap["estimate_lidar_non_returns"];
+  octomap_non_return_raytrace_d_min_ = J_octomap["non_return_raytrace_d_min"];
+  octomap_non_return_raytrace_d_max_ = J_octomap["non_return_raytrace_d_max"];
 }
 
 void MapBuilder::LoadTrajectory() {
@@ -172,10 +177,16 @@ void MapBuilder::ProcessPointCloudMsg(rosbag::View::iterator& iter,
     pcl::PointCloud<PointXYZIRT> cloud;
     beam::ROSToPCL(cloud, *sensor_msg);
     cloud_input = DeskewPointCloud(cloud, scan_time, sensor_number);
+    if (octomap_run_filter_ && octomap_estimate_lidar_non_returns_) {
+      CalculateNonReturns<PointXYZIRT>(cloud, TimeUnit::SECONDS);
+    }
   } else if (lidar_type_ == "OUSTER") {
     pcl::PointCloud<PointXYZITRRNR> cloud;
     beam::ROSToPCL(cloud, *sensor_msg);
     cloud_input = DeskewPointCloud(cloud, scan_time, sensor_number);
+    if (octomap_run_filter_ && octomap_estimate_lidar_non_returns_) {
+      CalculateNonReturns<PointXYZITRRNR>(cloud, TimeUnit::NANOSECONDS);
+    }
   } else {
     BEAM_ERROR("Invalid input lidar type: {}, options: VELODYNE, OUSTER",
                lidar_type_);
@@ -239,7 +250,8 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
     // get the transforms we will need:
     Eigen::Matrix4d T_Fixed_Moving = poses[k];
     Eigen::Matrix4d T_Fixed_Lidar = T_Fixed_Moving * T_Moving_Lidar;
-    const auto& scan_in_lidar = *scans_[k];
+    const auto& scan_in_lidar = *scans_.at(k);
+
     // build octomap
     if (octomap_run_filter_) {
       octomap::Pointcloud octo_pc;
@@ -250,21 +262,43 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
         Eigen::Vector4d p_in_fixed = T_Fixed_Lidar * p_in_scan;
         octo_pc.push_back(p_in_fixed[0], p_in_fixed[1], p_in_fixed[2]);
       }
-      octomap::point3d sensor_origin(T_Fixed_Lidar(0, 3), T_Fixed_Lidar(1, 3),
-                                     T_Fixed_Lidar(2, 3));
+      Eigen::Vector3d p_origin = T_Fixed_Lidar.block(0, 3, 3, 1);
+      octomap::point3d sensor_origin(p_origin[0], p_origin[1], p_origin[2]);
       octomap_->insertPointCloud(octo_pc, sensor_origin);
+
+      if (octomap_estimate_lidar_non_returns_) {
+        // iterate over non-returns and add as pointclouds
+        const auto& scan_non_returns = scan_non_returns_.at(k);
+        for (int i = 0; i < scan_non_returns.size(); i++) {
+          float yaw = scan_non_returns.at(i).x;
+          float pitch = scan_non_returns.at(i).y;
+
+          // calculate unit vector
+          float z = sin(pitch);
+          float dxy = sqrt(1 - z * z);
+          float x = dxy * cos(yaw);
+          float y = dxy * sin(yaw);
+
+          Eigen::Vector3d dir(x, y, z);
+          Eigen::Vector3d start_eig =
+              p_origin + octomap_non_return_raytrace_d_min_ * dir;
+          Eigen::Vector3d end_eig =
+              p_origin + octomap_non_return_raytrace_d_max_ * dir;
+          octomap::point3d start(start_eig[0], start_eig[1], start_eig[2]);
+          octomap::point3d end(end_eig[0], end_eig[1], end_eig[2]);
+          octomap_->insertMissedRay(start, end);
+        }
+      }
     }
 
     scan_poses.push_back(T_Fixed_Lidar);
     if (intermediary_size == 1) { T_Fixed_Int = T_Fixed_Lidar; }
     T_Int_Lidar = beam::InvertTransform(T_Fixed_Int) * T_Fixed_Lidar;
-
     PointCloud::Ptr scan_intermediate_frame = std::make_shared<PointCloud>();
     PointCloud::Ptr intermediary_transformed = std::make_shared<PointCloud>();
     pcl::transformPointCloud(scan_in_lidar, *scan_intermediate_frame,
                              T_Int_Lidar);
     *scan_intermediary += *scan_intermediate_frame;
-
     if (intermediary_size == intermediary_map_size_ || k == scans_.size()) {
       *scan_intermediate_frame =
           beam_filtering::FilterPointCloud<pcl::PointXYZ>(
@@ -299,7 +333,6 @@ void MapBuilder::GenerateMap(uint8_t sensor_number) {
     new_map = beam_filtering::FilterPointCloud<pcl::PointXYZ>(*scan_aggregate,
                                                               output_filters_);
   }
-
   maps_.push_back(std::make_shared<PointCloud>(new_map));
   sensor_data_[sensor_frame] = std::make_pair(scan_poses, scans_);
 }
@@ -352,12 +385,12 @@ void MapBuilder::GeneratePoses() {
   std::string save_path =
       beam::CombinePaths(save_dir_ + dateandtime_, "moving_frame_poses.pcd");
 
-  BEAM_INFO("Saving trajetory cloud of moving frame to: {}", save_path);
+  BEAM_INFO("Saving trajectory cloud of moving frame to: {}", save_path);
   std::string error_message;
   if (!beam::SavePointCloud<pcl::PointXYZRGB>(
           save_path, fixed_frame_traj, beam::PointCloudFileType::PCDBINARY,
           error_message)) {
-    BEAM_ERROR("Unable to save trajetory cloud. Reason: {}", error_message);
+    BEAM_ERROR("Unable to save trajectory cloud. Reason: {}", error_message);
   }
 
   // generate trajectory of each sensor frame
@@ -376,12 +409,12 @@ void MapBuilder::GeneratePoses() {
     save_path =
         beam::CombinePaths(save_dir_ + dateandtime_,
                            "sensor_frame_" + std::to_string(i) + "_poses.pcd");
-    BEAM_INFO("Saving trajetory cloud of sensor frame to: {}", save_path);
+    BEAM_INFO("Saving trajectory cloud of sensor frame to: {}", save_path);
     std::string error_message;
     if (!beam::SavePointCloud<pcl::PointXYZRGB>(
             save_path, sensor_frame_traj, beam::PointCloudFileType::PCDBINARY,
             error_message)) {
-      BEAM_ERROR("Unable to save trajetory cloud. Reason: {}", error_message);
+      BEAM_ERROR("Unable to save trajectory cloud. Reason: {}", error_message);
     }
   }
 }
@@ -394,7 +427,7 @@ void MapBuilder::BuildMap(bool save_output) {
 
   LoadTrajectory();
   if (octomap_run_filter_) {
-    octomap_ = std::make_unique<octomap::OcTree>(octomap_resolution_);
+    octomap_ = std::make_unique<OcTreeWrapper>(octomap_resolution_);
   }
 
   for (uint8_t i = 0; i < sensors_.size(); i++) {
