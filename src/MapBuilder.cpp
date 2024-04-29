@@ -84,7 +84,8 @@ void MapBuilder::LoadConfigFromJSON() {
   nlohmann::json J_octomap = J["octomap"];
   beam::ValidateJsonKeysOrThrow(
       {"run_octomap_filter", "resolution", "probability_threshold",
-       "estimate_lidar_non_returns", "non_return_raytrace_depth"},
+       "estimate_lidar_non_returns", "non_return_raytrace_d_min",
+       "non_return_raytrace_d_max"},
       J_octomap);
   octomap_run_filter_ = J_octomap["run_octomap_filter"];
   octomap_resolution_ = J_octomap["resolution"];
