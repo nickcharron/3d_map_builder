@@ -26,6 +26,10 @@ int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   beam_mapping::Poses pose_builder;
   pose_builder.LoadFromBAG(FLAGS_bag, FLAGS_topic);
+  if (pose_builder.GetTimeStamps().empty()){
+    std::cout << "Error: no poses read from bag, not saving poses file\n";
+    return 1;
+  }
   pose_builder.WriteToFile(FLAGS_output_path, FLAGS_output_type,
                            FLAGS_format_type);
   return 0;
