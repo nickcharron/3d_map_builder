@@ -1,11 +1,23 @@
-# 3d_map_builder
+# 3D Map Builder
 
 This repo contains the executables needed for building 3d maps from a SLAM trajectory and 3D sensor data, along with some useful data processing executables. This is intended to be used with libbeam's beam_mapping module (see install instructions for more details). This repo also contains some install tools to help install all necessary dependencies.
 
-For more information, see our published research paper at: COMING SOON
+**Citation**
 
-If you use this tool for any research work, please cite the above paper.
+If you found this work useful, please consider leaving a star ⭐ on this repository and citing [our paper](https://ieeexplore.ieee.org/abstract/document/10149804):
 
+```bibtex
+@article{thoms2023tightly,
+  title={Tightly coupled, graph-based DVL/IMU fusion and decoupled mapping for SLAM-centric maritime infrastructure inspection},
+  author={Thoms, Alexander and Earle, Gabriel and Charron, Nicholas and Narasimhan, Sriram},
+  journal={IEEE Journal of Oceanic Engineering},
+  volume={48},
+  number={3},
+  pages={663--676},
+  year={2023},
+  publisher={IEEE}
+}
+```
 ## Dependencies
 
 This repo only depends on our internal [libbeam](https://github.com/BEAMRobotics/libbeam) library. We currently have tested on Ubuntu18 with libbeam v1.1.0.
